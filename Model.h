@@ -1,16 +1,16 @@
 #ifndef Model_h
 #define Model_h
 
-#include <QtCore>
+#include <QtGui>
 
 struct Match
 {
     enum Type {
         Application,
         Url
-    };
+    } mType;
 
-    QString text;
+    QString text, path;
     QIcon icon;
 };
 
@@ -18,18 +18,16 @@ class Model : public QObject
 {
     Q_OBJECT
 public:
-    static Model *create(const QStringList &roots);
-    int matches(const QString &text, Match *matches, int max) const;
+    static Model *create(const QStringList &roots, QObject *parent);
+    QList<Match> matches(const QString &text) const;
     const QStringList &roots() const;
 signals:
     void initialized();
     void progress(int current);
-public slots:
-    void setMatches(const QList<QStringList> &data);
 private:
-    Model(const QString &path, QObject *parent = 0);
+    Model(const QStringList &path, QObject *parent = 0);
     friend class ModelThread;
-    QList<QStringList> mMatches;
+    QVector<QList<QPair<QString, QIcon> > > mData;
     const QStringList mRoots;
 };
 
