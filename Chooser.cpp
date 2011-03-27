@@ -31,3 +31,9 @@ void Chooser::startSearch(const QString& input)
     else
         mResultList->show();
 }
+void Chooser::showEvent(QShowEvent *e)
+{
+    raise();
+    activateWindow();
+    QWidget::showEvent(e);
+}

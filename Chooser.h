@@ -12,6 +12,7 @@ class Chooser : public QWidget
     Q_OBJECT
 public:
     Chooser(QWidget* parent = 0);
+    void showEvent(QShowEvent *e);
 
 private slots:
     void execute();
