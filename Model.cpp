@@ -17,7 +17,6 @@ static inline bool lessThan(const Match &left, const Match &right)
 Model::Model(const QStringList &roots, QObject *parent)
     : QObject(parent), mRoots(roots)
 {
-    mData.resize(mRoots.size());
 }
 
 static inline QString fileName(const QString &path)
@@ -26,18 +25,27 @@ static inline QString fileName(const QString &path)
     return path.mid(path.lastIndexOf(QLatin1Char('/')));
 }
 
+static inline QIcon iconForPath(const QString &path)
+{
+    if (path.isEmpty()) {
+        return QIcon(path);
+    } else {
+        Q_ASSERT(qApp);
+        return qApp->style()->standardIcon(QStyle::SP_FileIcon);
+    }
+}
+
 QList<Match> Model::matches(const QString &text) const
 {
     QList<Match> matches;
-    const int rootCount = mRoots.size();
-    for (int r=0; r<rootCount; ++r) {
-        const QList<QPair<QString, QIcon> > &list = mData.at(r);
-        const int count = list.size();
-        for (int i=0; i<count; ++i) {
-            const QPair<QString, QIcon> &item = list.at(i);
-            if (item.first.startsWith(text)) {
-                matches.append(Match(Match::Application, mRoots.at(r) + QLatin1Char('/') + text, text, item.second));
-            }
+    const int count = mItems.size();
+    for (int i=0; i<count; ++i) {
+        const Item &item = mItems.at(i);
+        const int slash = item.filePath.lastIndexOf('/');
+        Q_ASSERT(slash != -1);
+        const QString name = item.filePath.mid(slash + 1);
+        if (name.startsWith(text)) {
+            matches.append(Match(Match::Application, item.filePath, name, iconForPath(item.iconPath)));
         }
     }
     qSort(matches.begin(), matches.end(), lessThan);

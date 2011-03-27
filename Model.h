@@ -31,7 +31,11 @@ signals:
 private:
     Model(const QStringList &path, QObject *parent = 0);
     friend class ModelThread;
-    QVector<QList<QPair<QString, QIcon> > > mData;
+    struct Item {
+        QString filePath;
+        QString iconPath;
+    };
+    QList<Item> mItems;
     const QStringList mRoots;
 };
 

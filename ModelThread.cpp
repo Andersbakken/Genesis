@@ -7,9 +7,12 @@ ModelThread::ModelThread(Model *model)
     connect(this, SIGNAL(finished()), model, SIGNAL(initialized()));
 }
 
-static inline QIcon findIcon(const QString &)
+static inline QString findIconPath(const QString &path)
 {
-    return QIcon();
+#ifdef Q_OS_MAC
+
+#endif
+    return QString();
 }
 
 void ModelThread::run()
@@ -18,15 +21,15 @@ void ModelThread::run()
     const QStringList &roots = mModel->mRoots;
     Q_ASSERT(!roots.isEmpty());
     for (int i=0; i<roots.size(); ++i) {
-        QList<QPair<QString, QIcon> > &current = mModel->mData[i];
 #ifdef Q_OS_MAC
-        QDirIterator it(roots.at(i), QStringList() << "*.app", QDir::Dirs | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
+        QDirIterator it(roots.at(i), QStringList() << "*.app", QDir::Dirs | QDir::NoDotAndDotDot);
 #else
 #error Genesis has not been ported to your platform
 #endif
         while (it.hasNext()) {
             const QString file = it.next();
-            current.append(qMakePair(file, findIcon(file)));
+            const Model::Item item = { file, findIconPath(file) };
+            mModel->mItems.append(item);
         }
     }
 }
