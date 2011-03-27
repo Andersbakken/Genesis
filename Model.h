@@ -10,11 +10,11 @@ struct Match
         Url
     } type;
 
-    Match(Type t, const QString &tex, const QString &p, const QIcon &i)
-        : type(t), text(tex), path(p), icon(i)
+    Match(Type t, const QString &fn, const QString &fp, const QIcon &i)
+        : type(t), name(fn), filePath(fp), icon(i)
     {}
 
-    QString text, path;
+    QString name, filePath;
     QIcon icon;
 };
 
@@ -37,6 +37,7 @@ private:
     };
     QList<Item> mItems;
     const QStringList mRoots;
+    QFileIconProvider mFileIconProvider;
 };
 
 

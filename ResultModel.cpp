@@ -35,11 +35,13 @@ QVariant ResultModel::data(const QModelIndex &index, int role) const
     if (row < 0 || row >= mMatches.size())
         return QVariant();
 
-    qDebug() << index << mMatches.at(row).text;
-
-    if (role == Qt::DisplayRole)
-        return mMatches.at(row).text;
-    else if (role == Qt::DecorationRole)
+    switch (role) {
+    case Qt::DisplayRole:
+        return mMatches.at(row).name;
+    case Qt::DecorationRole:
         return mMatches.at(row).icon;
+    default:
+        break;
+    }
     return QVariant();
 }

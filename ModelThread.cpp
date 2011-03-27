@@ -7,11 +7,8 @@ ModelThread::ModelThread(Model *model)
     connect(this, SIGNAL(finished()), model, SIGNAL(initialized()));
 }
 
-static inline QString findIconPath(const QString &path)
+static inline QString findIconPath(const QString &)
 {
-#ifdef Q_OS_MAC
-
-#endif
     return QString();
 }
 
