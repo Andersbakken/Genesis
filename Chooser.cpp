@@ -13,6 +13,7 @@ Chooser::Chooser(QWidget* parent)
     QVBoxLayout* layout = new QVBoxLayout(this);
     layout->addWidget(mSearchInput);
     layout->addWidget(mResultList);
+    layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Fixed, QSizePolicy::MinimumExpanding));
 
     connect(mSearchInput, SIGNAL(returnPressed()), this, SLOT(execute()));
     connect(mSearchInput, SIGNAL(textChanged(QString)), this, SLOT(startSearch(QString)));
@@ -36,4 +37,18 @@ void Chooser::showEvent(QShowEvent *e)
     raise();
     activateWindow();
     QWidget::showEvent(e);
+}
+void Chooser::keyPressEvent(QKeyEvent *e)
+{
+    switch (e->key()) {
+    case Qt::Key_Escape:
+        if (mSearchInput->text().isEmpty()) {
+            close();
+        } else {
+            mSearchInput->clear(); // ### undoable?
+        }
+        break;
+    default:
+        break;
+    }
 }

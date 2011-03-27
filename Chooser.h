@@ -13,6 +13,7 @@ class Chooser : public QWidget
 public:
     Chooser(QWidget* parent = 0);
     void showEvent(QShowEvent *e);
+    void keyPressEvent(QKeyEvent *e);
 
 private slots:
     void execute();
