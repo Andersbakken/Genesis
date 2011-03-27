@@ -6,6 +6,7 @@
 struct Match
 {
     enum Type {
+        None,
         Application,
         Url
     } type;

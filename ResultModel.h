@@ -10,12 +10,15 @@ class ResultModel : public QAbstractListModel
 {
     Q_OBJECT
 public:
+    enum Role {
+        TypeRole = Qt::UserRole,
+        FilePathRole
+    };
     ResultModel(QObject *parent = 0);
 
-    int rowCount(const QModelIndex &parent) const;
+    int rowCount(const QModelIndex &parent = QModelIndex()) const;
     QVariant data(const QModelIndex &index, int role) const;
 
-    void clearMatches();
     void setMatches(const QList<Match>& matches);
 
 private:

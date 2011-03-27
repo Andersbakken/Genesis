@@ -1,9 +1,8 @@
 #ifndef CHOOSER_H
 #define CHOOSER_H
 
-#include <QWidget>
+#include <QtGui>
 
-class QLineEdit;
 class Model;
 class ResultList;
 
@@ -18,6 +17,7 @@ public:
 private slots:
     void execute();
     void startSearch(const QString& input);
+    void invoke(const QModelIndex &index);
 
 private:
     QLineEdit* mSearchInput;

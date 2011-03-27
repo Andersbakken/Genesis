@@ -5,15 +5,8 @@ ResultModel::ResultModel(QObject *parent)
 {
 }
 
-void ResultModel::clearMatches()
-{
-    mMatches.clear();
-    reset();
-}
-
 void ResultModel::setMatches(const QList<Match> &matches)
 {
-    mMatches.clear();
     mMatches = matches;
     reset();
 }
@@ -36,6 +29,10 @@ QVariant ResultModel::data(const QModelIndex &index, int role) const
         return QVariant();
 
     switch (role) {
+    case FilePathRole:
+        return mMatches.at(row).filePath;
+    case TypeRole:
+        return mMatches.at(row).type;
     case Qt::DisplayRole:
         return mMatches.at(row).name;
     case Qt::DecorationRole:

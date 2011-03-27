@@ -3,7 +3,7 @@
 ######################################################################
 
 TEMPLATE = app
-TARGET = 
+TARGET =
 DEPENDPATH += .
 INCLUDEPATH += .
 
@@ -11,7 +11,7 @@ OBJECTS_DIR = .obj
 MOC_DIR = .moc
 
 # Input
-SOURCES += main.cpp Model.cpp ModelThread.cpp Chooser.cpp ResultList.cpp ResultModel.cpp
-HEADERS += Model.h ModelThread.h Chooser.h ResultList.h ResultModel.h
+SOURCES += main.cpp Model.cpp ModelThread.cpp Chooser.cpp ResultList.cpp ResultModel.cpp LineEdit.cpp
+HEADERS += Model.h ModelThread.h Chooser.h ResultList.h ResultModel.h LineEdit.h
 
 CONFIG -= app_bundle

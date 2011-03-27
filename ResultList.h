@@ -14,9 +14,10 @@ public:
     ResultList(QWidget *parent = 0);
 
     void clear();
-
     void setMatches(const QList<Match>& matches);
-
+    void invoke(int idx);
+signals:
+    void clicked(const QModelIndex &index);
 private:
     ResultModel* mModel;
     QListView* mView;

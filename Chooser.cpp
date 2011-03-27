@@ -1,15 +1,16 @@
 #include "Chooser.h"
+#include "LineEdit.h"
 #include "Model.h"
 #include "ResultList.h"
-#include <QLineEdit>
-#include <QVBoxLayout>
+#include "ResultModel.h"
 
 Chooser::Chooser(QWidget* parent)
     : QWidget(parent)
-    , mSearchInput(new QLineEdit(this))
+    , mSearchInput(new LineEdit(this))
     , mSearchModel(Model::create(QStringList() << "/Applications", this))
     , mResultList(new ResultList(this))
 {
+    connect(mResultList, SIGNAL(clicked(QModelIndex)), this, SLOT(invoke(QModelIndex)));
     QVBoxLayout* layout = new QVBoxLayout(this);
     layout->addWidget(mSearchInput);
     layout->addWidget(mResultList);
@@ -38,6 +39,15 @@ void Chooser::showEvent(QShowEvent *e)
     activateWindow();
     QWidget::showEvent(e);
 }
+// Should stick this kind of thing into some global config object
+extern const Qt::KeyboardModifier numericModifier =
+#ifdef Q_OS_MAC
+    Qt::ControlModifier
+#else
+    Qt::AltModifier
+#endif
+    ;
+    
 void Chooser::keyPressEvent(QKeyEvent *e)
 {
     switch (e->key()) {
@@ -49,6 +59,25 @@ void Chooser::keyPressEvent(QKeyEvent *e)
         }
         break;
     default:
+        if (e->modifiers() == numericModifier && e->key() >= Qt::Key_1 && e->key() <= Qt::Key_9) {
+            const int idx = e->key() - Qt::Key_1;
+            mResultList->invoke(idx);
+        }
+        break;
+    }
+}
+
+void Chooser::invoke(const QModelIndex &index)
+{
+    const Match::Type type = static_cast<Match::Type>(index.data(ResultModel::TypeRole).toInt());
+    switch (type) {
+    case Match::Application:
+        QDesktopServices::openUrl(QUrl::fromLocalFile(index.data(ResultModel::FilePathRole).toString()));
+        close();
+        break;
+    case Match::Url:
+        break;
+    case Match::None:
         break;
     }
 }
