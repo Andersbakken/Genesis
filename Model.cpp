@@ -20,6 +20,12 @@ Model::Model(const QStringList &roots, QObject *parent)
     mData.resize(mRoots.size());
 }
 
+static inline QString fileName(const QString &path)
+{
+    Q_ASSERT(path.contains(QLatin1Char('/')));
+    return path.mid(path.lastIndexOf(QLatin1Char('/')));
+}
+
 QList<Match> Model::matches(const QString &text) const
 {
     QList<Match> matches;
@@ -28,9 +34,9 @@ QList<Match> Model::matches(const QString &text) const
         const QList<QPair<QString, QIcon> > &list = mData.at(r);
         const int count = list.size();
         for (int i=0; i<count; ++i) {
-            const QString &item = list.at(i);
-            if (item.startsWith(text)) {
-                matches.append(mRoots.at(r) + QLatin1Char('/') + text);
+            const QPair<QString, QIcon> &item = list.at(i);
+            if (item.first.startsWith(text)) {
+                matches.append(Match(Match::Application, mRoots.at(r) + QLatin1Char('/') + text, text), item.second);
             }
         }
     }

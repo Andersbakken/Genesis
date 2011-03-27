@@ -7,7 +7,7 @@
 Chooser::Chooser(QWidget* parent)
     : QWidget(parent)
     , mSearchInput(new QLineEdit(this))
-    , mSearchModel(Model::create(QStringList() << "/Applications"))
+    , mSearchModel(Model::create(QStringList() << "/Applications", this))
     , mResultList(new ResultList(this))
 {
     QVBoxLayout* layout = new QVBoxLayout(this);

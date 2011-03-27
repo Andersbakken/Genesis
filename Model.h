@@ -8,10 +8,14 @@ struct Match
     enum Type {
         Application,
         Url
-    } mType;
+    } const type;
 
-    QString text, path;
-    QIcon icon;
+    Match(Type t, const QString &tex, const QString &p, const QIcon &i)
+        : type(t), text(tex), path(p), icon(i)
+    {}
+
+    const QString text, path;
+    const QIcon icon;
 };
 
 class Model : public QObject
