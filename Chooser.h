@@ -11,7 +11,7 @@ class Chooser : public QWidget
 {
     Q_OBJECT
 public:
-    Chooser(QWidget* parent);
+    Chooser(QWidget* parent = 0);
 
 private slots:
     void execute();

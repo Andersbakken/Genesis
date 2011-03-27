@@ -5,13 +5,13 @@ Model *Model::create(const QStringList &roots, QObject *parent)
 {
     Model *model = new Model(roots, parent);
     ModelThread *thread = new ModelThread(model);
-    thread->run();
+    thread->start();
     return model;
 }
 
-static inline bool lessThan(const QString &left, const QString &right)
+static inline bool lessThan(const Match &left, const Match &right)
 {
-    return left.size() > right.size();
+    return left.text.size() > right.text.size();
 }
 
 Model::Model(const QStringList &roots, QObject *parent)
@@ -36,7 +36,7 @@ QList<Match> Model::matches(const QString &text) const
         for (int i=0; i<count; ++i) {
             const QPair<QString, QIcon> &item = list.at(i);
             if (item.first.startsWith(text)) {
-                matches.append(Match(Match::Application, mRoots.at(r) + QLatin1Char('/') + text, text), item.second);
+                matches.append(Match(Match::Application, mRoots.at(r) + QLatin1Char('/') + text, text, item.second));
             }
         }
     }

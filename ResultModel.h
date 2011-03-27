@@ -1,6 +1,7 @@
 #ifndef RESULTMODEL_H
 #define RESULTMODEL_H
 
+#include "Model.h"
 #include <QAbstractListModel>
 
 class Match;

@@ -20,7 +20,7 @@ void ModelThread::run()
     for (int i=0; i<roots.size(); ++i) {
         QList<QPair<QString, QIcon> > &current = mModel->mData[i];
 #ifdef Q_OS_MAC
-        QDirIterator it(roots.at(i), QStringList() << "*.app", QDir::Dirs, QDirIterator::Subdirectories);
+        QDirIterator it(roots.at(i), QStringList() << "*.app", QDir::Dirs | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
 #else
 #error Genesis has not been ported to your platform
 #endif

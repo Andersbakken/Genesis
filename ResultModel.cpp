@@ -1,5 +1,4 @@
 #include "ResultModel.h"
-#include "Model.h"
 
 ResultModel::ResultModel(QObject *parent)
     : QAbstractListModel(parent)
@@ -21,18 +20,22 @@ void ResultModel::setMatches(const QList<Match> &matches)
 
 int ResultModel::rowCount(const QModelIndex &parent) const
 {
+    if (parent.isValid())
+        return 0;
     return mMatches.size();
 }
 
 QVariant ResultModel::data(const QModelIndex &index, int role) const
 {
-    if (index.isValid()
+    if (!index.isValid()
         || index.column() != 0)
         return QVariant();
 
     int row = index.row();
     if (row < 0 || row >= mMatches.size())
         return QVariant();
+
+    qDebug() << index << mMatches.at(row).text;
 
     if (role == Qt::DisplayRole)
         return mMatches.at(row).text;
