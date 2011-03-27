@@ -11,5 +11,6 @@ OBJECTS_DIR = .obj
 MOC_DIR = .moc
 
 # Input
-SOURCES += main.cpp
+SOURCES += main.cpp Model.cpp ModelThread.cpp
+HEADERS += Model.h ModelThread.h
 CONFIG -= app_bundle
