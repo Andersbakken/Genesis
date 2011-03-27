@@ -11,13 +11,7 @@ OBJECTS_DIR = .obj
 MOC_DIR = .moc
 
 # Input
-SOURCES += main.cpp \
-    Chooser.cpp \
-    ResultList.cpp \
-    ResultModel.cpp
-CONFIG -= app_bundle
+SOURCES += main.cpp Model.cpp ModelThread.cpp Chooser.cpp ResultList.cpp ResultModel.cpp
+HEADERS += Model.h ModelThread.h Chooser.h ResultList.h ResultModel.h
 
-HEADERS += \
-    Chooser.h \
-    ResultList.h \
-    ResultModel.h
+CONFIG -= app_bundle

@@ -8,6 +8,11 @@ Model * Model::create(const QStringList &roots, QObject *parent)
     return model;
 }
 
+static inline bool lessThan(const QString &left, const QString &right)
+{
+    return left.size() > right.size();
+}
+
 QList<Match> Model::matches(const QString &text) const
 {
     QList<Match> matches;
@@ -17,20 +22,21 @@ QList<Match> Model::matches(const QString &text) const
         const int count = list.size();
         for (int i=0; i<count; ++i) {
             const QString &item = list.at(i);
-            if (text == item) {
-                matches.prepend(mRoots.at(i) item
+            if (item.startsWith(text)) {
+                matches.append(mRoots.at(r) + QLatin1Char('/') + text);
             }
+        }
     }
-
-
-}
-
-const QStringList & Model::all() const
-{
-    return mAll;
+    qSort(matches.begin(), matches.end(), lessThan);
+    return matches;
 }
 
 const QStringList & Model::roots() const
 {
-    return mMatches;
+    return mRoots;
+}
+void Model::setMatches(const QList<QStringList> &data)
+{
+    mMatches = data;
+    emit initialized();
 }
