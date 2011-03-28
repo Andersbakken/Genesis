@@ -3,6 +3,10 @@
 LineEdit::LineEdit(QWidget *parent)
     : QLineEdit(parent)
 {
+    setAttribute(Qt::WA_MacShowFocusRect, false);
+
+    setStyleSheet(QLatin1String("QLineEdit { border: 1px solid rgb(160, 160, 160); background: rgb(200, 200, 200) }"));
+
     setMinimumHeight(qApp->font().pixelSize() + 10);
 }
 

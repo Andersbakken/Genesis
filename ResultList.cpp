@@ -16,6 +16,8 @@ ResultList::ResultList(QWidget *parent)
 
     setModel(mModel);
     setItemDelegate(new Delegate(this));
+
+    setStyleSheet(QLatin1String("QListView { border: 1px solid rgb(160, 160, 160); background: rgb(200, 200, 200) }"));
 }
 
 void ResultList::clear()

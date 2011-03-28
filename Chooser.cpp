@@ -40,17 +40,78 @@ static void animate(QWidget *target, bool enter)
     group->start(QAbstractAnimation::DeleteWhenStopped);
 }
 
+class RoundedWidget : public QWidget
+{
+public:
+    RoundedWidget(QWidget* parent);
+
+    void setFillColor(const QColor& fill);
+    void setRoundedRadius(qreal radius);
+
+protected:
+    void paintEvent(QPaintEvent* e);
+
+private:
+    QColor mFill;
+    qreal mRadius;
+};
+
+RoundedWidget::RoundedWidget(QWidget* parent)
+    : QWidget(parent), mRadius(15.)
+{
+}
+
+void RoundedWidget::setFillColor(const QColor& fill)
+{
+    mFill = fill;
+}
+
+void RoundedWidget::setRoundedRadius(qreal radius)
+{
+    mRadius = radius;
+}
+
+void RoundedWidget::paintEvent(QPaintEvent* e)
+{
+    Q_UNUSED(e)
+
+    QPainter p(this);
+    p.setRenderHint(QPainter::Antialiasing);
+    p.setBrush(mFill);
+    p.setPen(Qt::NoPen);
+
+    QPainterPath path;
+    path.addRoundedRect(rect(), mRadius, mRadius);
+
+    p.drawPath(path);
+}
+
 Chooser::Chooser(QWidget *parent)
     : QWidget(parent, Qt::FramelessWindowHint), mSearchInput(new LineEdit(this)),
       mSearchModel(new Model(QStringList() << "/Applications/", this)), mResultList(new ResultList(this)),
       mShortcut(new GlobalShortcut(this))
 {
+    QVBoxLayout* layout = new QVBoxLayout(this);
+    RoundedWidget* back = new RoundedWidget(this);
+    back->setFillColor(QColor(90, 90, 90, 210));
+    layout->addWidget(back);
+    layout->setMargin(0);
+
+    layout = new QVBoxLayout(back);
+    RoundedWidget* container = new RoundedWidget(back);
+    container->setFillColor(QColor(230, 230, 230));
+    container->setRoundedRadius(8.);
+    layout->addWidget(container);
+    layout->setMargin(10);
+
+    layout = new QVBoxLayout(container);
+
+    setAttribute(Qt::WA_TranslucentBackground);
     setAttribute(Qt::WA_QuitOnClose, false);
     new QShortcut(QKeySequence(QKeySequence::Close), this, SLOT(fadeOut()));
     connect(mResultList, SIGNAL(clicked(QModelIndex)), this, SLOT(invoke(QModelIndex)));
-    QVBoxLayout* layout = new QVBoxLayout(this);
-    layout->setMargin(1);
-    layout->setSpacing(1);
+    layout->setMargin(10);
+    layout->setSpacing(10);
     layout->addWidget(mSearchInput, 0, Qt::AlignTop);
     layout->addWidget(mResultList);
 
@@ -160,6 +221,7 @@ void Chooser::fadeOut()
 {
     ::animate(this, false);
 }
+
 bool Chooser::event(QEvent *e)
 {
     if (e->type() == QEvent::WindowDeactivate) {
