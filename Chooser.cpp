@@ -4,6 +4,26 @@
 #include "ResultList.h"
 #include "ResultModel.h"
 
+static void animate(QWidget *target, bool enter)
+{
+    QParallelAnimationGroup *group = new QParallelAnimationGroup;
+    QPropertyAnimation *opacityAnimation = new QPropertyAnimation(target, "windowOpacity", group);
+    opacityAnimation->setDuration(400);
+    opacityAnimation->setEndValue(enter ? 1.0 : 0.0);
+    QPropertyAnimation *positionAnimation = new QPropertyAnimation(target, "pos", group);
+    QRect r = target->rect();
+    r.moveCenter(qApp->desktop()->screenGeometry(target).center());
+    if (!enter) {
+        r.moveBottom(0);
+        QObject::connect(group, SIGNAL(finished()), target, SLOT(close()));
+    }
+
+    positionAnimation->setDuration(200);
+    positionAnimation->setEasingCurve(QEasingCurve::InQuad);
+    positionAnimation->setEndValue(r.topLeft());
+    group->start(QAbstractAnimation::DeleteWhenStopped);
+}
+
 Chooser::Chooser(QWidget* parent)
     : QWidget(parent, Qt::FramelessWindowHint)
     , mSearchInput(new LineEdit(this))
@@ -32,13 +52,17 @@ void Chooser::startSearch(const QString& input)
 }
 void Chooser::showEvent(QShowEvent *e)
 {
+    QRect r(QPoint(), size());
+    r.moveCenter(qApp->desktop()->screenGeometry(this).center());
+    r.moveBottom(0);
+
+    move(r.topLeft());
+    setWindowOpacity(.0);
+
     raise();
     activateWindow();
-    setWindowOpacity(.0);
-    QPropertyAnimation *animation = new QPropertyAnimation(this, "windowOpacity");
-    animation->setDuration(400);
-    animation->setEndValue(1.0);
-    animation->start(QAbstractAnimation::DeleteWhenStopped);
+    ::animate(this, true);
+
     
     QWidget::showEvent(e);
 }
@@ -46,18 +70,18 @@ void Chooser::showEvent(QShowEvent *e)
 // Should stick this kind of thing into some global config object
 extern const Qt::KeyboardModifier numericModifier =
 #ifdef Q_OS_MAC
-    Qt::ControlModifier
+        Qt::ControlModifier
 #else
-    Qt::AltModifier
+        Qt::AltModifier
 #endif
-    ;
+        ;
     
 void Chooser::keyPressEvent(QKeyEvent *e)
 {
     switch (e->key()) {
     case Qt::Key_Escape:
         if (mSearchInput->text().isEmpty()) {
-            close();
+            fadeOut();
         } else {
             mSearchInput->clear(); // ### undoable?
         }
@@ -98,9 +122,5 @@ void Chooser::invoke(const QModelIndex &index)
 
 void Chooser::fadeOut()
 {
-    QPropertyAnimation *animation = new QPropertyAnimation(this, "windowOpacity");
-    animation->setDuration(400);
-    animation->setEndValue(0.0);
-    connect(animation, SIGNAL(finished()), this, SLOT(close()));
-    animation->start(QAbstractAnimation::DeleteWhenStopped);
+    ::animate(this, false);
 }
