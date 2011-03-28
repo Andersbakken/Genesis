@@ -12,7 +12,7 @@ int main(int argc, char **argv)
     Config config;
     QFont font;
     const QString family = config.value<QString>("fontFamily");
-    if (family.isEmpty())
+    if (!family.isEmpty())
         font.setFamily(family);
     font.setPixelSize(config.value<int>("fontSize", 20));
     a.setFont(font);
