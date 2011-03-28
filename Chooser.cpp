@@ -212,7 +212,6 @@ void Chooser::keyPressEvent(QKeyEvent *e)
                 if (key.matches(seq) == QKeySequence::ExactMatch) {
                     invoke(idx);
                     e->accept();
-                    mSearchInput->clear();
                     return;
                 }
             }
@@ -242,6 +241,8 @@ void Chooser::invoke(const QModelIndex &index)
     case Match::None:
         break;
     }
+
+    mSearchInput->clear();
 }
 
 void Chooser::fadeOut()
