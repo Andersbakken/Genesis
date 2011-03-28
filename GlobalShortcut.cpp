@@ -2,6 +2,7 @@
 #include <QWidget>
 #include <QHash>
 #include <QDebug>
+
 #ifdef Q_OS_MAC
 #include <Carbon/Carbon.h>
 
@@ -10,7 +11,6 @@ struct Shortcut
     GlobalShortcut* creator;
     EventHotKeyRef* keyref;
 };
-
 #endif
 
 class GlobalShortcutPrivate
@@ -35,18 +35,20 @@ public:
 #endif
     }
 
-    GlobalShortcut* shortcut;
-
     void notify(int code)
     {
         emit shortcut->activated(code);
     }
+
+    GlobalShortcut* shortcut;
 #ifdef Q_OS_MAC
     static QHash<int, Shortcut> shortcuts;
 #endif
 };
 
+#ifdef Q_OS_MAC
 QHash<int, Shortcut> GlobalShortcutPrivate::shortcuts;
+#endif
 
 #ifdef Q_OS_MAC
 static OSStatus hotKeyHandler(EventHandlerCallRef nextHandler, EventRef event, void *userData)
