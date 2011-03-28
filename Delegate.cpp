@@ -11,18 +11,21 @@ Delegate::Delegate(QAbstractItemView* parent)
 void Delegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
     QIcon icon = qVariantValue<QIcon>(index.data(Qt::DecorationRole));
-    const QFontMetrics metrics(qApp->font());
-    const int iconSize = metrics.height();
+    QRect r = option.rect;
+
+    enum { IconMargin = 4, Margin = 4 };
+
+    const int iconSize = r.height() - (IconMargin * 2) - 1;
     const bool isCurrent = (index == mView->currentIndex());
+
+    QColor highlight = option.palette.highlight().color();
+
     if (isCurrent) {
-        painter->fillRect(option.rect, option.palette.highlight());
+        painter->fillRect(option.rect, highlight);
         painter->setPen(option.palette.highlightedText().color());
     } else {
         painter->setPen(option.palette.text().color());
     }
-    QRect r = option.rect;
-
-    enum { IconMargin = 2, Margin = 4 };
 
     const int iconDiffY = r.height() - iconSize;
     const QRect iconRect(r.x() + IconMargin, r.y() + iconDiffY / 2, iconSize, iconSize);
@@ -30,8 +33,9 @@ void Delegate::paint(QPainter *painter, const QStyleOptionViewItem &option, cons
 
     r.setLeft(iconSize + IconMargin + Margin);
     painter->setFont(qApp->font()); // ### why do I have to do this?
-    painter->drawText(r, Qt::AlignLeft|Qt::AlignVCenter, index.data(Qt::DisplayRole).toString());
+    painter->drawText(r, Qt::AlignLeft|Qt::AlignTop, index.data(Qt::DisplayRole).toString());
     r.setRight(r.right() - Margin);
+    r.setBottom(r.bottom() - Margin);
     QList<QKeySequence> sequences = qVariantValue<QList<QKeySequence> >(index.data(ResultModel::KeySequencesRole));
     if (isCurrent)
         sequences.prepend(QKeySequence(Qt::Key_Return));
@@ -42,9 +46,26 @@ void Delegate::paint(QPainter *painter, const QStyleOptionViewItem &option, cons
         keyString.append(seq.toString(QKeySequence::NativeText));
     }
 
-    painter->drawText(r, Qt::AlignRight|Qt::AlignVCenter, keyString);
+    painter->drawText(r, Qt::AlignRight|Qt::AlignTop, keyString);
+
+    QFont subFont(qApp->font());
+    subFont.setPixelSize(subFont.pixelSize() / 2);
+    painter->setFont(subFont);
+    painter->setPen(QColor(100, 100, 100));
+
+    const int subx1 = r.bottomLeft().x() - iconSize - IconMargin;
+    const int subx2 = r.bottomRight().x();
+
+    QFontMetrics metrics = QFontMetrics(subFont);
+    QString subText = metrics.elidedText(index.data(ResultModel::FilePathRole).toString(), Qt::ElideMiddle, subx2 - subx1);
+
+    painter->drawText(r, Qt::AlignLeft|Qt::AlignBottom, subText);
+
+    painter->setPen(highlight);
+    painter->drawLine(subx1, r.bottomLeft().y() + Margin,
+                      subx2, r.bottomRight().y() + Margin);
 }
 QSize Delegate::sizeHint(const QStyleOptionViewItem &, const QModelIndex &) const
 {
-    return QSize(1, mPixelSize + 10);
+    return QSize(1, mPixelSize + (mPixelSize / 2) + 15);
 }

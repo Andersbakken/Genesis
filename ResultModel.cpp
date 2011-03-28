@@ -31,7 +31,8 @@ QVariant ResultModel::data(const QModelIndex &index, int role) const
     const Match &match = mMatches.at(row);
     switch (role) {
     case FilePathRole:
-        Q_ASSERT(match.type == Match::Application);
+        if (match.type != Match::Application)
+            return QVariant();
         return match.filePath;
     case UrlRole:
         Q_ASSERT(match.type == Match::Url);
