@@ -1,22 +1,15 @@
 #include "Model.h"
 #include <ModelThread.h>
 
-Model *Model::create(const QStringList &roots, QObject *parent)
-{
-    Model *model = new Model(roots, parent);
-    ModelThread *thread = new ModelThread(model);
-    thread->start();
-    return model;
-}
-
 static inline bool lessThan(const Match &left, const Match &right)
 {
     return left.name.size() > right.name.size();
 }
 
 Model::Model(const QStringList &roots, QObject *parent)
-    : QObject(parent), mRoots(roots)
+    : QObject(parent), mRoots(roots), mFileSystemWatcher(0)
 {
+    reload();
 }
 
 static inline QString name(const QString &path)
@@ -91,4 +84,11 @@ QList<Match> Model::matches(const QString &text) const
 const QStringList & Model::roots() const
 {
     return mRoots;
+}
+
+void Model::reload()
+{
+    printf("%s %d: void Model::reload()\n", __FILE__, __LINE__);
+    ModelThread *thread = new ModelThread(this);
+    thread->start();
 }

@@ -9,9 +9,11 @@ class ModelThread : public QThread
 public:
     ModelThread(Model *model);
     virtual void run();
-    void recurse(const QByteArray &path, int maxDepth = 3);
+    void recurse(const QByteArray &path, int maxDepth);
 private:
     Model *mModel;
+    QSet<QString> mWatchPaths;
+    QFileSystemWatcher *mWatcher;
 };
 
 #endif
