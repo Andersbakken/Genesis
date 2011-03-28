@@ -33,8 +33,6 @@ void ModelThread::run()
     delete mModel->mFileSystemWatcher;
     mWatcher->addPaths(mWatchPaths.toList());
     mModel->mFileSystemWatcher = mWatcher;
-    
-    qDebug() << "setting watched paths" << mWatchPaths;
 }
 
 void ModelThread::recurse(const QByteArray &path, int maxDepth)
