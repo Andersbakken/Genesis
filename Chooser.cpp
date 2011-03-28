@@ -7,7 +7,7 @@
 Chooser::Chooser(QWidget* parent)
     : QWidget(parent)
     , mSearchInput(new LineEdit(this))
-    , mSearchModel(Model::create(QStringList() << "/Applications", this))
+    , mSearchModel(Model::create(QStringList() << "/Applications/" << "/Applications/Microsoft Office 2011/", this))
     , mResultList(new ResultList(this))
 {
     connect(mResultList, SIGNAL(clicked(QModelIndex)), this, SLOT(invoke(QModelIndex)));

@@ -60,12 +60,10 @@ QList<Match> Model::matches(const QString &text) const
                                  item.iconPath.isEmpty() ? mFileIconProvider.icon(QFileInfo(item.filePath)) : QIcon(item.iconPath)));
         }
     }
-    if (matches.isEmpty()) {
-        matches.append(Match(Match::Url, QString("Search Google for '%1'").arg(text),
-                             "http://www.google.com/search?ie=UTF-8&q=" + QUrl::toPercentEncoding(text),
-                             googleIcon()));
-    }
     qSort(matches.begin(), matches.end(), lessThan);
+    matches.append(Match(Match::Url, QString("Search Google for '%1'").arg(text),
+                         "http://www.google.com/search?ie=UTF-8&q=" + QUrl::toPercentEncoding(text),
+                         googleIcon()));
     return matches;
 }
 
