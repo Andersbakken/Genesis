@@ -47,7 +47,8 @@ QVariant ResultModel::data(const QModelIndex &index, int role) const
         QList<QKeySequence> ret;
         if (!match.keySequence.isEmpty())
             ret.append(match.keySequence);
-        ret.append(QKeySequence(numericModifier | (Qt::Key_1 + index.row())));
+        if (index.row() < 9)
+            ret.append(QKeySequence(numericModifier | (Qt::Key_1 + index.row())));
         return qVariantFromValue(ret);
     }
     default:

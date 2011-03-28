@@ -17,7 +17,7 @@ void Delegate::paint(QPainter *painter, const QStyleOptionViewItem &option, cons
         painter->fillRect(option.rect, option.palette.highlight());
         painter->setPen(option.palette.highlightedText().color());
     } else {
-        painter->setPen(option.palette.dark().color());
+        painter->setPen(option.palette.text().color());
     }
     icon.paint(painter, QRect(option.rect.x(), option.rect.y(), iconSize, iconSize));
     QRect r = option.rect;

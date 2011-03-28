@@ -5,12 +5,22 @@
 int main(int argc, char **argv)
 {
     QApplication a(argc, argv);
+    a.setOrganizationName("Genesis");
+    a.setApplicationName("Genesis");
+    a.setOrganizationDomain("https://github.com/Andersbakken/Genesis");
 
     Config config;
     QFont font;
+    const QString family = config.value<QString>("fontFamily");
+    if (family.isEmpty())
+        font.setFamily(family);
     font.setPixelSize(config.value<int>("fontSize", 20));
     a.setFont(font);
+
     QPalette pal = a.palette();
+    pal.setColor(QPalette::Base, Qt::black);
+    pal.setColor(QPalette::Text, Qt::white);
+
     const QMetaObject &mo = QPalette::staticMetaObject;
     const QMetaEnum e = mo.enumerator(mo.indexOfEnumerator("ColorRole"));
     const int count = e.keyCount();

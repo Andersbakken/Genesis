@@ -55,6 +55,8 @@ CONFIG_TYPE(QLineF);
 CONFIG_TYPE(QVariantList);
 CONFIG_TYPE(QVariantMap);
 CONFIG_TYPE(QColor);
+typedef QHash<QString, QString> StringHash;
+CONFIG_TYPE(StringHash);
 
 class Config
 {
@@ -63,7 +65,7 @@ public:
     ~Config();
     void setEnabled(const QString &key, bool on)
     {
-        Config::setValue(key, on);
+        setValue(key, on);
     }
 
     inline bool isDisabled(const QString &k, bool defaultValue = false)
@@ -136,7 +138,7 @@ public:
         if (!value.isNull()) {
             ok = ::read(value, t);
             if (ok && store()) {
-                Config::setValue<T>(key, t);
+                setValue<T>(key, t);
             }
         } else {
             ok = ::read(s, k, t);
@@ -168,7 +170,7 @@ public:
         if (value.isNull()) {
             value = s->value(key, defaultValue);
         } else if (store()) {
-            Config::setValue(key, value);
+            setValue(key, value);
         }
 
         return value;

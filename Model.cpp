@@ -9,6 +9,9 @@ static inline bool lessThan(const Match &left, const Match &right)
 Model::Model(const QStringList &roots, QObject *parent)
     : QObject(parent), mRoots(roots), mFileSystemWatcher(0)
 {
+    Config config;
+    mUserEntries = config.value<QVariantMap>("userEntries");
+    qDebug() << mUserEntries;
     reload();
 }
 
@@ -49,24 +52,40 @@ QList<Match> Model::matches(const QString &text) const
 {
     // ### should match on stuff like "word" for "Microsoft Word"
     QList<Match> matches;
+    QRegExp rx("\\b" + text);
+    rx.setCaseSensitivity(Qt::CaseInsensitive);
     if (!text.isEmpty()) {
         const int count = mItems.size();
+        bool foundPreviousUserEntry = false;
+        const QString userEntryPath = mUserEntries.value(text).toString();
+        // $$$ This really should be a QMap<QString, QString> or a sorted stringlist or something
         for (int i=0; i<count; ++i) {
             const Item &item = mItems.at(i);
             const int slash = item.filePath.lastIndexOf('/');
             Q_ASSERT(slash != -1);
             const QString name = ::name(item.filePath);
-            if (name.startsWith(text, Qt::CaseInsensitive)) {
-                matches.append(Match(Match::Application, name, item.filePath, item.iconPath.isEmpty()
-                                     ? mFileIconProvider.icon(QFileInfo(item.filePath))
-                                     : QIcon(item.iconPath)));
+            if (name.contains(rx)) {
+                const Match m(Match::Application, name, item.filePath, item.iconPath.isEmpty()
+                              ? mFileIconProvider.icon(QFileInfo(item.filePath))
+                              : QIcon(item.iconPath));
+                if (userEntryPath == item.filePath) {
+                    foundPreviousUserEntry = true;
+                    matches.prepend(m);
+                } else {
+                    matches.append(m);
+                }
             }
         }
-        qSort(matches.begin(), matches.end(), lessThan);
-        enum { MaxCount = 10 };
-        while (matches.size() > MaxCount) {
-            matches.removeLast();
-            // ### could do insertion sort and not add more than MaxCount then
+        if (matches.size() > 1) {
+            QList<Match>::iterator it = matches.begin();
+            if (foundPreviousUserEntry)
+                ++it;
+            qSort(it, matches.end(), lessThan); // ### hm, what to do about this one
+            // enum { MaxCount = 10 };
+            // while (matches.size() > MaxCount) {
+            //     matches.removeLast();
+            //     // ### could do insertion sort and not add more than MaxCount then
+            // }
         }
         matches.append(Match(Match::Url, QString("Search Google for '%1'").arg(text),
                              "http://www.google.com/search?ie=UTF-8&q=" + QUrl::toPercentEncoding(text),
@@ -90,4 +109,11 @@ void Model::reload()
 {
     ModelThread *thread = new ModelThread(this);
     thread->start();
+}
+
+void Model::recordUserEntry(const QString &input, const QString &path)
+{
+    mUserEntries[input] = path;
+    Config config;
+    config.setValue("userEntries", mUserEntries);
 }
