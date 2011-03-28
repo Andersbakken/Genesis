@@ -125,7 +125,17 @@ void Model::reload()
 
 void Model::recordUserEntry(const QString &input, const QString &path)
 {
-    mUserEntries[input] = path;
+    const int inputLength = input.length();
+    if (!inputLength)
+        return;
+
+    int pos = 1;
+    do {
+        QString entry = input.left(pos);
+        mUserEntries[entry] = path;
+        ++pos;
+    } while (pos < inputLength);
+
     Config config;
     config.setValue("userEntries", mUserEntries);
 }
