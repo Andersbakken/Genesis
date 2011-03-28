@@ -36,21 +36,9 @@ void ResultList::invoke(int idx)
     if (idx < mModel->rowCount(QModelIndex()))
         emit clicked(mModel->index(idx));
 }
-void ResultList::keyPressEvent(QKeyEvent *e)
-{
-    switch (e->key()) {
-    case Qt::Key_Up:
-    case Qt::Key_Down:
-        e->accept();
-        break;
-    default:
-        break;
-    }
-    QWidget::keyPressEvent(e);
-}
+
 void ResultList::up()
 {
-    printf("%s %d: void ResultList::up()\n", __FILE__, __LINE__);
     const int current = mView->currentIndex().row();
     if (current > 0) {
         mView->setCurrentIndex(mModel->index(current - 1, 0));
@@ -59,7 +47,6 @@ void ResultList::up()
 
 void ResultList::down()
 {
-    printf("%s %d: void ResultList::down()\n", __FILE__, __LINE__);
     const int current = mView->currentIndex().row();
     const int count = mModel->rowCount();
     if (current + 1 < count) {
@@ -69,5 +56,6 @@ void ResultList::down()
 
 void ResultList::enter()
 {
-    
+    if (mView->currentIndex().isValid())
+        emit clicked(mView->currentIndex());
 }
