@@ -59,8 +59,8 @@ void Delegate::paint(QPainter *painter, const QStyleOptionViewItem &option, cons
     painter->drawText(r, Qt::AlignLeft|Qt::AlignBottom, subText);
 
     painter->setPen(highlight);
-    painter->drawLine(r.bottomLeft().x() - iconSize - IconMargin, r.bottomLeft().y() + Margin,
-                      r.bottomRight().x(), r.bottomRight().y() + Margin);
+    painter->drawLine(r.bottomLeft().x() - iconSize - IconMargin - Margin, r.bottomLeft().y() + Margin,
+                      r.bottomRight().x() + Margin, r.bottomRight().y() + Margin);
 }
 QSize Delegate::sizeHint(const QStyleOptionViewItem &, const QModelIndex &) const
 {

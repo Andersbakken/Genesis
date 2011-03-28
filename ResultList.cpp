@@ -6,6 +6,8 @@
 ResultList::ResultList(QWidget *parent)
     : QListView(parent), mModel(new ResultModel(this))
 {
+    setAttribute(Qt::WA_MacShowFocusRect, false);
+
     setPalette(qApp->palette()); // ### Am I supposed to do this?
     setSizePolicy(QSizePolicy::Minimum, QSizePolicy::MinimumExpanding);
     // ### need to send up and down to mView
