@@ -1,4 +1,5 @@
 #include "Chooser.h"
+#include "GlobalShortcut.h"
 #include "LineEdit.h"
 #include "Model.h"
 #include "ResultList.h"
@@ -24,9 +25,10 @@ static void animate(QWidget *target, bool enter)
     group->start(QAbstractAnimation::DeleteWhenStopped);
 }
 
-Chooser::Chooser(QWidget* parent)
+Chooser::Chooser(int keycode, int modifier, QWidget *parent)
     : QWidget(parent, Qt::FramelessWindowHint), mSearchInput(new LineEdit(this)),
-      mSearchModel(new Model(QStringList() << "/Applications/", this)), mResultList(new ResultList(this))
+      mSearchModel(new Model(QStringList() << "/Applications/", this)), mResultList(new ResultList(this)),
+      mShortcut(new GlobalShortcut(this))
 {
     setAttribute(Qt::WA_QuitOnClose, false);
     new QShortcut(QKeySequence(QKeySequence::Close), this, SLOT(fadeOut()));
@@ -40,6 +42,18 @@ Chooser::Chooser(QWidget* parent)
     connect(mSearchInput, SIGNAL(textChanged(QString)), this, SLOT(startSearch(QString)));
     Config config;
     resize(config.value<int>("width", 500), config.value<int>("height", 500));
+
+    connect(mShortcut, SIGNAL(activated(int)), this, SLOT(shortcutActivated(int)));
+    mActivateId = mShortcut->registerShortcut(keycode, modifier);
+}
+
+void Chooser::shortcutActivated(int shortcut)
+{
+    if (shortcut != mActivateId)
+        return;
+
+    show();
+    raise();
 }
 
 void Chooser::startSearch(const QString& input)

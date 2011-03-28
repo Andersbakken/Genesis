@@ -1,10 +1,31 @@
 #include "GlobalShortcut.h"
 #include <QWidget>
+#include <QHash>
 #include <QDebug>
-
 #ifdef Q_OS_MAC
 #include <Carbon/Carbon.h>
+#endif
 
+class GlobalShortcutPrivate
+{
+public:
+    GlobalShortcutPrivate(GlobalShortcut* s)
+        : shortcut(s)
+    {
+    }
+
+    GlobalShortcut* shortcut;
+
+    void notify(int code)
+    {
+        emit shortcut->activated(code);
+    }
+#ifdef Q_OS_MAC
+    static QHash<int, EventHotKeyRef*> keyref;
+#endif
+};
+
+#ifdef Q_OS_MAC
 static OSStatus hotKeyHandler(EventHandlerCallRef nextHandler, EventRef event, void *userData)
 {
     Q_UNUSED(nextHandler)
@@ -13,34 +34,16 @@ static OSStatus hotKeyHandler(EventHandlerCallRef nextHandler, EventRef event, v
     EventHotKeyID hotKeyID;
     GetEventParameter(event, kEventParamDirectObject, typeEventHotKeyID, NULL, sizeof(hotKeyID), NULL, &hotKeyID);
 
-    if (hotKeyID.id == 1) {
-        GlobalShortcut* shortcut = reinterpret_cast<GlobalShortcut*>(userData);
-        shortcut->notify();
-    }
+    GlobalShortcutPrivate* shortcut = reinterpret_cast<GlobalShortcutPrivate*>(userData);
+    shortcut->notify(hotKeyID.id);
 
     return noErr;
 }
 #endif
 
-class GlobalShortcutPrivate
+GlobalShortcut::GlobalShortcut(QObject* parent)
+    : QObject(parent), priv(new GlobalShortcutPrivate(this))
 {
-public:
-#ifdef Q_OS_MAC
-    GlobalShortcutPrivate()
-    {
-        keyref = 0;
-    }
-
-    EventHotKeyRef* keyref;
-#endif
-    QWidget* toplevel;
-};
-
-GlobalShortcut::GlobalShortcut(QWidget* toplevel)
-    : priv(new GlobalShortcutPrivate)
-{
-    priv->toplevel = toplevel;
-
     static bool first = true;
     if (first) {
         first = false;
@@ -51,7 +54,7 @@ GlobalShortcut::GlobalShortcut(QWidget* toplevel)
         spec.eventClass = kEventClassKeyboard;
         spec.eventKind = kEventHotKeyPressed;
 
-        InstallApplicationEventHandler(&hotKeyHandler, 1, &spec, this, NULL);
+        InstallApplicationEventHandler(&hotKeyHandler, 1, &spec, priv, NULL);
 #endif
     }
 }
@@ -61,32 +64,34 @@ GlobalShortcut::~GlobalShortcut()
     delete priv;
 }
 
-void GlobalShortcut::registerShortcut(int keycode, int modifier)
+int GlobalShortcut::registerShortcut(int keycode, int modifier)
 {
-    unregisterShortcut();
-#ifdef Q_OS_MAC
-    priv->keyref = new EventHotKeyRef;
+    static int id = 1;
 
+#ifdef Q_OS_MAC
+    while (GlobalShortcutPrivate::keyref.contains(id))
+        ++id;
+
+    EventHotKeyRef* ref = new EventHotKeyRef;
     EventHotKeyID keyid;
-    keyid.signature = 1000;
-    keyid.id = 1;
-    RegisterEventHotKey(keycode, modifier, keyid, GetEventDispatcherTarget(), 0, priv->keyref);
+    keyid.signature = 1122;
+    keyid.id = id;
+    RegisterEventHotKey(keycode, modifier, keyid, GetEventDispatcherTarget(), 0, ref);
+
+    GlobalShortcutPrivate::keyref[id] = ref;
 #endif
+
+    return id++;
 }
 
-void GlobalShortcut::unregisterShortcut()
+void GlobalShortcut::unregisterShortcut(int id)
 {
 #ifdef Q_OS_MAC
-    if (priv->keyref) {
-        UnregisterEventHotKey(*(priv->keyref));
-        delete priv->keyref;
-        priv->keyref = 0;
+    QHash<int, EventHotKeyRef*>::iterator it = GlobalShortcutPrivate::keyref.find(id);
+    if (it != GlobalShortcutPrivate::keyref.end()) {
+        UnregisterEventHotKey(**it);
+        delete *it;
+        GlobalShortcutPrivate::keyref.erase(it);
     }
 #endif
-}
-
-void GlobalShortcut::notify()
-{
-    priv->toplevel->show();
-    priv->toplevel->raise();
 }

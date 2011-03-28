@@ -1,22 +1,27 @@
 #ifndef GLOBALSHORTCUT_H
 #define GLOBALSHORTCUT_H
 
-class GlobalShortcutPrivate;
-class QWidget;
+#include <QObject>
 
-class GlobalShortcut
+class GlobalShortcutPrivate;
+
+class GlobalShortcut : public QObject
 {
+    Q_OBJECT
 public:
-    GlobalShortcut(QWidget* toplevel);
+    GlobalShortcut(QObject* parent);
     ~GlobalShortcut();
 
-    void registerShortcut(int keycode, int modifier);
-    void unregisterShortcut();
+    int registerShortcut(int keycode, int modifier);
+    void unregisterShortcut(int id);
 
-    void notify();
+signals:
+    void activated(int id);
 
 private:
     GlobalShortcutPrivate* priv;
+
+    friend class GlobalShortcutPrivate;
 };
 
 #endif // GLOBALSHORTCUT_H
