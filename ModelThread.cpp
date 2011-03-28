@@ -68,7 +68,7 @@ void ModelThread::recurse(const QByteArray &path, int maxDepth)
                 const Model::Item item = { QString::fromUtf8(fileBuffer), findIconPath(fileBuffer) };
                 mModel->mItems.append(item);
             } else if (maxDepth > 1 && (d->d_namlen > 2 || (strcmp(".", d->d_name) && strcmp("..", d->d_name)))) {
-                recurse(path + reinterpret_cast<const char *>(d->d_name) + '/', maxDepth - 1);
+                recurse(path + '/' + reinterpret_cast<const char *>(d->d_name), maxDepth - 1);
             }
         }
 #else
