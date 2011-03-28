@@ -34,8 +34,6 @@ private:
     GlobalShortcut* mShortcut;
     int mActivateId;
 
-    QVBoxLayout* mLayout;
-
     int mWidth;
     int mResultHiddenHeight;
     int mResultShownHeight;

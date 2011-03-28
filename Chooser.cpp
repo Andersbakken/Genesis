@@ -93,29 +93,29 @@ Chooser::Chooser(QWidget *parent)
       mSearchModel(new Model(QStringList() << "/Applications/", this)), mResultList(new ResultList(this)),
       mShortcut(new GlobalShortcut(this))
 {
-    mLayout = new QVBoxLayout(this);
+    QVBoxLayout* layout = new QVBoxLayout(this);
     RoundedWidget* back = new RoundedWidget(this);
     back->setFillColor(QColor(90, 90, 90, 210));
-    mLayout->addWidget(back);
-    mLayout->setMargin(0);
+    layout->addWidget(back);
+    layout->setMargin(0);
 
-    mLayout = new QVBoxLayout(back);
+    layout = new QVBoxLayout(back);
     RoundedWidget* container = new RoundedWidget(back);
     container->setFillColor(QColor(230, 230, 230));
     container->setRoundedRadius(8.);
-    mLayout->addWidget(container);
-    mLayout->setMargin(10);
+    layout->addWidget(container);
+    layout->setMargin(10);
 
-    mLayout = new QVBoxLayout(container);
+    layout = new QVBoxLayout(container);
 
     setAttribute(Qt::WA_TranslucentBackground);
     setAttribute(Qt::WA_QuitOnClose, false);
     new QShortcut(QKeySequence(QKeySequence::Close), this, SLOT(fadeOut()));
     connect(mResultList, SIGNAL(clicked(QModelIndex)), this, SLOT(invoke(QModelIndex)));
-    mLayout->setMargin(10);
-    mLayout->setSpacing(10);
-    mLayout->addWidget(mSearchInput, 0, Qt::AlignTop);
-    mLayout->addWidget(mResultList);
+    layout->setMargin(10);
+    layout->setSpacing(10);
+    layout->addWidget(mSearchInput, 0, Qt::AlignTop);
+    layout->addWidget(mResultList);
 
     mResultList->hide();
 
@@ -242,7 +242,6 @@ void Chooser::hideResultList()
         return;
 
     mResultList->hide();
-    mLayout->removeWidget(mResultList);
     setMinimumHeight(mResultHiddenHeight); // ### why is this needed?
     resize(mWidth, mResultHiddenHeight);
 }
@@ -252,7 +251,6 @@ void Chooser::showResultList()
     if (!mResultList->isHidden())
         return;
 
-    mLayout->addWidget(mResultList);
     mResultList->show();
     resize(mWidth, mResultShownHeight);
 }
