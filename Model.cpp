@@ -20,9 +20,12 @@ Model::Model(const QStringList &roots, QObject *parent)
 {
     Config config;
     mUserEntries = config.value<QVariantMap>("userEntries");
-    const QStringList list = config.value<QStringList>("urlHandlers", defaultUrlHandlers());
+    bool ok;
+    QStringList list = config.value<QStringList>("urlHandlers", defaultUrlHandlers(), &ok);
+    if (ok && config.isEnabled("defaultUrlHandlers", true))
+        list += defaultUrlHandlers();
     foreach(const QString &string, list) {
-        const QStringList list = string.split('|', QString::SkipEmptyParts);
+        const QStringList list = string.split('|');
         if (list.size() != 3 || list.at(1).isEmpty()) {
             qWarning("Invalid url handler %s", qPrintable(string));
             continue;
