@@ -53,17 +53,14 @@ void Delegate::paint(QPainter *painter, const QStyleOptionViewItem &option, cons
     painter->setFont(subFont);
     painter->setPen(qApp->palette().color(QPalette::BrightText));
 
-    const int subx1 = r.bottomLeft().x() - iconSize - IconMargin;
-    const int subx2 = r.bottomRight().x();
-
     QFontMetrics metrics = QFontMetrics(subFont);
     QString subText = metrics.elidedText(index.data(ResultModel::FilePathRole).toString(), Qt::ElideMiddle, r.width());
 
     painter->drawText(r, Qt::AlignLeft|Qt::AlignBottom, subText);
 
     painter->setPen(highlight);
-    painter->drawLine(subx1, r.bottomLeft().y() + Margin,
-                      subx2, r.bottomRight().y() + Margin);
+    painter->drawLine(r.bottomLeft().x() - iconSize - IconMargin, r.bottomLeft().y() + Margin,
+                      r.bottomRight().x(), r.bottomRight().y() + Margin);
 }
 QSize Delegate::sizeHint(const QStyleOptionViewItem &, const QModelIndex &) const
 {
