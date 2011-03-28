@@ -3,7 +3,7 @@
 
 static inline bool lessThan(const Match &left, const Match &right)
 {
-    return left.name.size() > right.name.size();
+    return left.name.size() < right.name.size();
 }
 
 static QStringList defaultUrlHandlers()
