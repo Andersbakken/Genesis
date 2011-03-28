@@ -4,96 +4,57 @@
 
 /* not thread safe */
 
-template <typename T> bool read(const QVariant &, T &)
-{
-    return false;
-}
-
-template <typename T> static bool read(QSettings *settings, const QString &str, T &t)
-{
-    const QByteArray data = settings->value(str).toByteArray();
-    if (!data.isEmpty()) {
-        if (data.size() != sizeof(T)) {
-            qWarning("Mismatched data for %s. Expected %d bytes, got %d",
-                     qPrintable(str), int(sizeof(T)), data.size());
-            return false;
-        }
-        memcpy(reinterpret_cast<char*>(&t), data.constData(), sizeof(T));
-        return true;
+#define CONFIG_TYPE(T)                                          \
+    Q_DECLARE_METATYPE(T);                                      \
+    static inline bool read(const QVariant &v, T &t) {          \
+        if (qVariantCanConvert<T>(v)) {                         \
+            t = qVariantValue<T>(v);                            \
+            return true;                                        \
+        }                                                       \
+        return false;                                           \
+    }                                                           \
+    static inline bool read(QSettings *settings,                \
+                            const QString &key,                 \
+                            T &t) {                             \
+        const QVariant var = settings->value(key);              \
+        if (!var.isNull() && qVariantCanConvert<T>(var)) {      \
+            t = qVariantValue<T>(var);                          \
+            return true;                                        \
+        }                                                       \
+        return false;                                           \
+    }                                                           \
+    static inline void write(QSettings *settings,               \
+                             const QString &key,                \
+                             const T &t) {                      \
+        settings->setValue(key, qVariantFromValue<T>(t));       \
     }
-    return false;
-}
-
-template <typename T> static void write(QSettings *settings, const QString &str, const T &t)
-{
-    QByteArray byteArray(sizeof(T), 0);
-    memcpy(byteArray.data(), reinterpret_cast<const char*>(&t), sizeof(T));
-    settings->setValue(str, byteArray);
-}
-
-#define CONFIG_TYPE(T)                                                  \
-    Q_DECLARE_METATYPE(T);                                              \
-    static inline bool read(const QVariant &v, T &t) {                  \
-        if (qVariantCanConvert<T>(v)) {                                 \
-            t = qVariantValue<T>(v);                                    \
-            return true;                                                \
-        }                                                               \
-        return false;                                                   \
-    }                                                                   \
-    static inline  bool read(QSettings *settings, const QString &key,   \
-                             T &t) {                                    \
-        const QVariant var = settings->value(key);                      \
-        if (!var.isNull() && qVariantCanConvert<T>(var)) {              \
-            t = qVariantValue<T>(var);                                  \
-            return true;                                                \
-        }                                                               \
-        return false;                                                   \
-    }                                                                   \
-    static inline void write(QSettings *settings, const QString &key,   \
-                             const T &t) {                              \
-        settings->setValue(key, qVariantFromValue<T>(t));               \
-    }                                                                   \
 
 CONFIG_TYPE(bool);
 CONFIG_TYPE(qint8);
 CONFIG_TYPE(qint16);
 CONFIG_TYPE(qint32);
 CONFIG_TYPE(qint64);
-
 CONFIG_TYPE(quint8);
 CONFIG_TYPE(quint16);
 CONFIG_TYPE(quint32);
 CONFIG_TYPE(quint64);
-
 CONFIG_TYPE(float);
 CONFIG_TYPE(double);
-
 CONFIG_TYPE(QChar);
 CONFIG_TYPE(QString);
 CONFIG_TYPE(QStringList);
 CONFIG_TYPE(QByteArray);
-
 CONFIG_TYPE(QPoint);
 CONFIG_TYPE(QSize);
 CONFIG_TYPE(QRect);
 CONFIG_TYPE(QLine);
-
 CONFIG_TYPE(QPointF);
 CONFIG_TYPE(QSizeF);
 CONFIG_TYPE(QRectF);
 CONFIG_TYPE(QLineF);
-
-typedef QList<QVariant> VariantList;
-typedef QMap<QString, QVariant> StringVariantMap;
-typedef QHash<QString, QVariant> StringVariantHash;
-
-CONFIG_TYPE(VariantList);
-CONFIG_TYPE(StringVariantMap);
-CONFIG_TYPE(StringVariantHash);
-
-#ifdef QT_GUI_LIB
+CONFIG_TYPE(QVariantList);
+CONFIG_TYPE(QVariantMap);
 CONFIG_TYPE(QColor);
-#endif
 
 class Config
 {
