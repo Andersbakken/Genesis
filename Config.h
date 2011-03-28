@@ -176,9 +176,9 @@ public:
         return value;
     }
 
+    QSettings *settings();
 private:
     QSettings *mSettings;
-    QSettings *settings();
     bool store();
     QVariant valueFromCommandLine(const QString &key);
 };

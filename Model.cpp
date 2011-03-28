@@ -6,28 +6,12 @@ static inline bool lessThan(const Match &left, const Match &right)
     return left.name.size() > right.name.size();
 }
 
-static QVariantList defaultUrlHandlers()
+static QStringList defaultUrlHandlers()
 {
-    QVariantList ret;
-    {
-        QMap<QString, QVariant> map;
-        map["url"] = "http://www.google.com/search?ie=UTF-8&q=%s";
-        map["icon"] = ":/google.ico";
-        ret.append(map);
-    }
-    {
-        QMap<QString, QVariant> map;
-        map["url"] = "http://en.wikipedia.org/wiki/Special:Search?search=%s&go=Go";
-        map["icon"] = ":/wikipedia.ico";
-        ret.append(map);
-    }
-    {
-        QMap<QString, QVariant> map;
-        map["url"] = "http://www.amazon.com/s?url=search-alias=aps&field-keywords=%s";
-        map["icon"] = ":/amazon.ico";
-        ret.append(map);
-    }
-
+    QStringList ret;
+    ret << "%s|http://www.google.com/search?ie=UTF-8&q=%s|:/google.ico"
+        << "%s|http://en.wikipedia.org/wiki/Special:Search?search=%s&go=Go|:/wikipedia.ico"
+        << "%s|http://www.amazon.com/s?url=search-alias=aps&field-keywords=%s|:/amazon.ico";
     return ret;
 }
 
@@ -36,7 +20,16 @@ Model::Model(const QStringList &roots, QObject *parent)
 {
     Config config;
     mUserEntries = config.value<QVariantMap>("userEntries");
-    mUrlHandlers = config.value<QVariantList>("urlHandlers", defaultUrlHandlers());
+    const QStringList list = config.value<QStringList>("urlHandlers", defaultUrlHandlers());
+    foreach(const QString &string, list) {
+        const QStringList list = string.split('|', QString::SkipEmptyParts);
+        if (list.size() != 3 || list.at(1).isEmpty()) {
+            qWarning("Invalid url handler %s", qPrintable(string));
+            continue;
+        }
+        mUrlHandlers.append(list);
+    }
+
     reload();
 }
 
@@ -97,19 +90,19 @@ QList<Match> Model::matches(const QString &text) const
         }
         const int urlHandlerCount = mUrlHandlers.size(); // ### could store the matches and modify them here
         for (int i=0; i<urlHandlerCount; ++i) {
-            QVariantMap map = qVariantValue<QVariantMap>(mUrlHandlers.at(i));
-            QString url = map.value("url").toString();
-            if (url.isEmpty()) {
-                qWarning() << "Invalid urlhandler" << map;
-                continue;
-            }
+            const QStringList &handler = mUrlHandlers.at(i);
+            QString url = handler.at(1);
             url.replace("%s", QUrl::toPercentEncoding(text));
 
-            QString name = map.value("name", text).toString();
-            name.replace("%s", text);
+            QString name = handler.at(0);
+            if (name.isEmpty()) {
+                name = text;
+            } else {
+                name.replace("%s", text);
+            }
 
             // ### clever default icon?
-            matches.append(Match(Match::Url, name, url, QIcon(map.value("icon").toString())));
+            matches.append(Match(Match::Url, name, url, QIcon(handler.at(2))));
         }
     }
     return matches;
