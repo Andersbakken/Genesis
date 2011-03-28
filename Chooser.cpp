@@ -124,6 +124,7 @@ void Chooser::keyPressEvent(QKeyEvent *e)
                 if (key.matches(seq) == QKeySequence::ExactMatch) {
                     invoke(idx);
                     e->accept();
+                    mSearchInput->clear();
                     return;
                 }
             }
