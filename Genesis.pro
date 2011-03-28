@@ -18,7 +18,8 @@ HEADERS += Model.h \
            LineEdit.h \
            Delegate.h \
            Config.h \
-    GlobalShortcut.h
+           GlobalShortcut.h
+
 SOURCES += main.cpp \
            Model.cpp \
            ModelThread.cpp \
@@ -28,7 +29,7 @@ SOURCES += main.cpp \
            LineEdit.cpp \
            Delegate.cpp \
            Config.cpp \
-    GlobalShortcut.cpp
+           GlobalShortcut.cpp
 
 RESOURCES = Genesis.qrc
 
