@@ -65,7 +65,8 @@ QList<Match> Model::matches(const QString &text) const
             const QString name = ::name(item.filePath);
             if (name.startsWith(text, Qt::CaseInsensitive)) {
                 matches.append(Match(Match::Application, name, item.filePath,
-                                     item.iconPath.isEmpty() ? mFileIconProvider.icon(QFileInfo(item.filePath)) : QIcon(item.iconPath)));
+                                     item.iconPath.isEmpty() ? mFileIconProvider.icon(QFileInfo(item.filePath)) :
+                                     QIcon(item.iconPath)));
             }
         }
         qSort(matches.begin(), matches.end(), lessThan);
@@ -83,7 +84,6 @@ QList<Match> Model::matches(const QString &text) const
                              QString("http://en.wikipedia.org/wiki/Special:Search?search=%1&go=Go").
                              arg(QString::fromUtf8(QUrl::toPercentEncoding(text))),
                              wikipediaIcon()));
-        // command-G for the google one maybe?
     }
     return matches;
 }

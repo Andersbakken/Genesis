@@ -34,8 +34,15 @@ void Chooser::showEvent(QShowEvent *e)
 {
     raise();
     activateWindow();
+    setWindowOpacity(.0);
+    QPropertyAnimation *animation = new QPropertyAnimation(this, "windowOpacity");
+    animation->setDuration(400);
+    animation->setEndValue(1.0);
+    animation->start(QAbstractAnimation::DeleteWhenStopped);
+    
     QWidget::showEvent(e);
 }
+
 // Should stick this kind of thing into some global config object
 extern const Qt::KeyboardModifier numericModifier =
 #ifdef Q_OS_MAC
@@ -78,13 +85,22 @@ void Chooser::invoke(const QModelIndex &index)
     switch (type) {
     case Match::Application:
         QDesktopServices::openUrl(QUrl::fromLocalFile(index.data(ResultModel::FilePathRole).toString()));
-        close();
+        fadeOut();
         break;
     case Match::Url:
         QDesktopServices::openUrl(index.data(ResultModel::UrlRole).toString());
-        close();
+        fadeOut();
         break;
     case Match::None:
         break;
     }
+}
+
+void Chooser::fadeOut()
+{
+    QPropertyAnimation *animation = new QPropertyAnimation(this, "windowOpacity");
+    animation->setDuration(400);
+    animation->setEndValue(0.0);
+    connect(animation, SIGNAL(finished()), this, SLOT(close()));
+    animation->start(QAbstractAnimation::DeleteWhenStopped);
 }
