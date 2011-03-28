@@ -57,7 +57,7 @@ void Delegate::paint(QPainter *painter, const QStyleOptionViewItem &option, cons
     const int subx2 = r.bottomRight().x();
 
     QFontMetrics metrics = QFontMetrics(subFont);
-    QString subText = metrics.elidedText(index.data(ResultModel::FilePathRole).toString(), Qt::ElideMiddle, subx2 - subx1);
+    QString subText = metrics.elidedText(index.data(ResultModel::FilePathRole).toString(), Qt::ElideMiddle, r.width());
 
     painter->drawText(r, Qt::AlignLeft|Qt::AlignBottom, subText);
 
