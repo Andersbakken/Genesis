@@ -1,6 +1,8 @@
 #include <QtGui>
+#include <QtNetwork>
 #include "Chooser.h"
 #include "Config.h"
+#include "LocalServer.h"
 
 int main(int argc, char **argv)
 {
@@ -8,8 +10,32 @@ int main(int argc, char **argv)
     a.setOrganizationName("Genesis");
     a.setApplicationName("Genesis");
     a.setOrganizationDomain("https://github.com/Andersbakken/Genesis");
-
     Config config;
+    const QString serverName = config.value<QString>("localServerName", "Genesis");
+    if (!LocalServer::instance()->listen(serverName)) {
+        qDebug() << LocalServer::instance()->errorString() << serverName;
+        QLocalSocket socket;
+        socket.connectToServer(serverName);
+        if (!socket.waitForConnected(config.value<int>("localServerConnectionTimeout", 3000))) {
+            qWarning("Can't seem to connect to server");
+            return 1;
+        }
+        QByteArray data;
+        {
+            QDataStream ds(&data, QIODevice::WriteOnly);
+            ds << data.size();
+            ds << a.arguments();
+            ds.device()->seek(0);
+            ds << data.size();
+        }
+        socket.write(data);
+        if (!socket.waitForBytesWritten(config.value<int>("localServerConnectionTimeout", 3000))) {
+            qWarning("Can't seem to write to server");
+            return 1;
+        }
+        return 0;
+    }
+
     QFont font;
     const QString family = config.value<QString>("fontFamily");
     if (!family.isEmpty())

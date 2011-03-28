@@ -7,29 +7,33 @@ TARGET =
 DEPENDPATH += .
 INCLUDEPATH += .
 
+QT = core network gui
+
 OBJECTS_DIR = .obj
 MOC_DIR = .moc
 
-HEADERS += Model.h \
-           ModelThread.h \
-           Chooser.h \
-           ResultList.h \
-           ResultModel.h \
-           LineEdit.h \
-           Delegate.h \
+HEADERS += Chooser.h \
            Config.h \
-           GlobalShortcut.h
+           Delegate.h \
+           GlobalShortcut.h \
+           LineEdit.h \
+           LocalServer.h \
+           Model.h \
+           ModelThread.h \
+           ResultList.h \
+           ResultModel.h
 
-SOURCES += main.cpp \
+SOURCES += Chooser.cpp \
+           Config.cpp \
+           Delegate.cpp \
+           GlobalShortcut.cpp \
+           LineEdit.cpp \
+           LocalServer.cpp \
            Model.cpp \
            ModelThread.cpp \
-           Chooser.cpp \
            ResultList.cpp \
            ResultModel.cpp \
-           LineEdit.cpp \
-           Delegate.cpp \
-           Config.cpp \
-           GlobalShortcut.cpp
+           main.cpp
 
 RESOURCES = Genesis.qrc
 
