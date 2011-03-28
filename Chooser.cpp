@@ -92,7 +92,11 @@ void Chooser::showEvent(QShowEvent *e)
     activateWindow();
     ::animate(this, true);
 
-    mSearchInput->selectAll();
+    if (!mSearchInput->text().isEmpty()) {
+        mSearchInput->selectAll();
+        startSearch(mSearchInput->text());
+    }
+
     QWidget::showEvent(e);
 }
 
