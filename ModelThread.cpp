@@ -49,8 +49,8 @@ void ModelThread::recurse(const QByteArray &path, int maxDepth)
         return;
     }
     struct dirent *d;
-    struct stat s;
 #ifndef Q_OS_MAC
+    struct stat s;
     mWatchPaths.insert(path);
 #endif
     char fileBuffer[1024];
@@ -65,7 +65,7 @@ void ModelThread::recurse(const QByteArray &path, int maxDepth)
             if (d->d_namlen > 4 && !strcmp(d->d_name + d->d_namlen - 4, ".app")) {
                 mWatchPaths.insert(path);
                 strcpy(file, d->d_name);
-                const Model::Item item = { QString::fromUTF8(fileBuffer), findIconPath(fileBuffer) };
+                const Model::Item item = { QString::fromUtf8(fileBuffer), findIconPath(fileBuffer) };
                 mModel->mItems.append(item);
             } else if (maxDepth > 1 && (d->d_namlen > 2 || (strcmp(".", d->d_name) && strcmp("..", d->d_name)))) {
                 recurse(path + reinterpret_cast<const char *>(d->d_name) + '/', maxDepth - 1);
