@@ -88,7 +88,6 @@ const QStringList & Model::roots() const
 
 void Model::reload()
 {
-    printf("%s %d: void Model::reload()\n", __FILE__, __LINE__);
     ModelThread *thread = new ModelThread(this);
     thread->start();
 }

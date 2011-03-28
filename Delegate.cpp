@@ -4,8 +4,8 @@
 Delegate::Delegate(QAbstractItemView* parent)
     : QItemDelegate(parent), mView(parent)
 {
+    mPixelSize = mConfig.value<int>("fontSize", 20);
     Q_ASSERT(mView);
-    
 }
 
 void Delegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
@@ -40,5 +40,5 @@ void Delegate::paint(QPainter *painter, const QStyleOptionViewItem &option, cons
 }
 QSize Delegate::sizeHint(const QStyleOptionViewItem &, const QModelIndex &) const
 {
-    return QSize(1, qApp->font().pixelSize() + 10);
+    return QSize(1, mPixelSize + 10);
 }
