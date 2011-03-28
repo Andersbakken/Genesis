@@ -9,9 +9,9 @@ static inline bool lessThan(const Match &left, const Match &right)
 static QStringList defaultUrlHandlers()
 {
     QStringList ret;
-    ret << "%s|http://www.google.com/search?ie=UTF-8&q=%s|:/google.ico"
-        << "%s|http://en.wikipedia.org/wiki/Special:Search?search=%s&go=Go|:/wikipedia.ico"
-        << "%s|http://www.amazon.com/s?url=search-alias=aps&field-keywords=%s|:/amazon.ico";
+    ret << "%s|http://www.google.com/search?ie=UTF-8&q=%s|:/google.png"
+        << "%s|http://en.wikipedia.org/wiki/Special:Search?search=%s&go=Go|:/wikipedia.png"
+        << "%s|http://www.amazon.com/s?url=search-alias=aps&field-keywords=%s|:/amazon.png";
     return ret;
 }
 

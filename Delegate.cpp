@@ -11,7 +11,8 @@ Delegate::Delegate(QAbstractItemView* parent)
 void Delegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
     QIcon icon = qVariantValue<QIcon>(index.data(Qt::DecorationRole));
-    const int iconSize = qApp->font().pixelSize();
+    QFontMetrics metrics(qApp->font());
+    const int iconSize = metrics.height();
     const bool isCurrent = (index == mView->currentIndex());
     if (isCurrent) {
         painter->fillRect(option.rect, option.palette.highlight());
