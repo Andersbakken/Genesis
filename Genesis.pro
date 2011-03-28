@@ -17,7 +17,8 @@ HEADERS += Model.h \
            ResultModel.h \
            LineEdit.h \
            Delegate.h \
-           Config.h
+           Config.h \
+    GlobalShortcut.h
 SOURCES += main.cpp \
            Model.cpp \
            ModelThread.cpp \
@@ -26,8 +27,12 @@ SOURCES += main.cpp \
            ResultModel.cpp \
            LineEdit.cpp \
            Delegate.cpp \
-           Config.cpp
+           Config.cpp \
+    GlobalShortcut.cpp
 
 RESOURCES = Genesis.qrc
 
-QMAKE_INFO_PLIST = Info.plist
+mac {
+    QMAKE_INFO_PLIST = Info.plist
+    LIBS += -framework Carbon
+}

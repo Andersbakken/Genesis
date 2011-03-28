@@ -1,6 +1,7 @@
 #include <QtGui>
 #include "Chooser.h"
 #include "Config.h"
+#include "GlobalShortcut.h"
 
 int main(int argc, char **argv)
 {
@@ -36,6 +37,12 @@ int main(int argc, char **argv)
 
     Chooser chooser;
     chooser.show();
+
+    const int keycode = config.value<int>(QLatin1String("shortcutKeycode"), 49); // 49 = space
+    const int modifier = config.value<int>(QLatin1String("shortcutModifier"), 256); // 256 = cmd
+
+    GlobalShortcut shortcut(&chooser);
+    shortcut.registerShortcut(keycode, modifier);
 
     return a.exec();
 }
