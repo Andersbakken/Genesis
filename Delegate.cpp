@@ -1,8 +1,9 @@
 #include "Delegate.h"
 
-Delegate::Delegate(QObject *parent)
-    : QItemDelegate(parent)
+Delegate::Delegate(QAbstractItemView* parent)
+    : QItemDelegate(parent), mView(parent)
 {
+    Q_ASSERT(mView);
     
 }
 
@@ -10,7 +11,7 @@ void Delegate::paint(QPainter *painter, const QStyleOptionViewItem &option, cons
 {
     QIcon icon = qVariantValue<QIcon>(index.data(Qt::DecorationRole));
     enum { IconSize = 24 };
-    const bool isSelected = (option.state & QStyle::State_Selected);
+    const bool isSelected = (index == mView->currentIndex());
     if (isSelected) {
         painter->fillRect(option.rect, option.palette.highlight());
         painter->setPen(option.palette.highlightedText().color());

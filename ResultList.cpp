@@ -10,6 +10,10 @@ ResultList::ResultList(QWidget *parent)
     QHBoxLayout* layout = new QHBoxLayout(this);
     layout->addWidget(mView);
     connect(mView, SIGNAL(clicked(QModelIndex)), this, SIGNAL(clicked(QModelIndex)));
+    connect(new QShortcut(QKeySequence(Qt::Key_Up), window()), SIGNAL(activated()), this, SLOT(up()));
+    connect(new QShortcut(QKeySequence(Qt::Key_Down), window()), SIGNAL(activated()), this, SLOT(down()));
+    connect(new QShortcut(QKeySequence(Qt::Key_Enter), window()), SIGNAL(activated()), this, SLOT(enter()));
+    connect(new QShortcut(QKeySequence(Qt::Key_Return), window()), SIGNAL(activated()), this, SLOT(enter()));
 
     mView->setModel(mModel);
     mView->setItemDelegate(new Delegate(mView));
@@ -24,7 +28,7 @@ void ResultList::setMatches(const QList<Match> &matches)
 {
     mModel->setMatches(matches);
     if (mModel->rowCount()) {
-        mView->selectionModel()->select(mModel->index(0, 0), QItemSelectionModel::Select);
+        mView->setCurrentIndex(mModel->index(0, 0));
     }
 }
 void ResultList::invoke(int idx)
@@ -43,4 +47,27 @@ void ResultList::keyPressEvent(QKeyEvent *e)
         break;
     }
     QWidget::keyPressEvent(e);
+}
+void ResultList::up()
+{
+    printf("%s %d: void ResultList::up()\n", __FILE__, __LINE__);
+    const int current = mView->currentIndex().row();
+    if (current > 0) {
+        mView->setCurrentIndex(mModel->index(current - 1, 0));
+    }
+}
+
+void ResultList::down()
+{
+    printf("%s %d: void ResultList::down()\n", __FILE__, __LINE__);
+    const int current = mView->currentIndex().row();
+    const int count = mModel->rowCount();
+    if (current + 1 < count) {
+        mView->setCurrentIndex(mModel->index(current + 1, 0));
+    }
+}
+
+void ResultList::enter()
+{
+    
 }

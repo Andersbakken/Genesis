@@ -18,6 +18,10 @@ public:
     void invoke(int idx);
     QListView *listView() const { return mView; }
     void keyPressEvent(QKeyEvent *e);
+public slots:
+    void up();
+    void down();
+    void enter();
 signals:
     void clicked(const QModelIndex &index);
 private:

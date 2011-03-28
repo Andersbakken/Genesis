@@ -7,10 +7,12 @@ class Delegate : public QItemDelegate
 {
     Q_OBJECT
 public:
-    Delegate(QObject *parent = 0);
+    Delegate(QAbstractItemView *parent = 0);
     virtual void paint(QPainter *painter,
                        const QStyleOptionViewItem &option,
                        const QModelIndex &index) const;
+private:
+    QAbstractItemView *mView;
 };
 
 
