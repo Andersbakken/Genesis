@@ -91,33 +91,40 @@ Chooser::Chooser(QWidget *parent)
       mSearchModel(new Model(QStringList() << "/Applications/", this)), mResultList(new ResultList(this)),
       mShortcut(new GlobalShortcut(this))
 {
-    QVBoxLayout* layout = new QVBoxLayout(this);
+    mLayout = new QVBoxLayout(this);
     RoundedWidget* back = new RoundedWidget(this);
     back->setFillColor(QColor(90, 90, 90, 210));
-    layout->addWidget(back);
-    layout->setMargin(0);
+    mLayout->addWidget(back);
+    mLayout->setMargin(0);
 
-    layout = new QVBoxLayout(back);
+    mLayout = new QVBoxLayout(back);
     RoundedWidget* container = new RoundedWidget(back);
     container->setFillColor(QColor(230, 230, 230));
     container->setRoundedRadius(8.);
-    layout->addWidget(container);
-    layout->setMargin(10);
+    mLayout->addWidget(container);
+    mLayout->setMargin(10);
 
-    layout = new QVBoxLayout(container);
+    mLayout = new QVBoxLayout(container);
 
     setAttribute(Qt::WA_TranslucentBackground);
     setAttribute(Qt::WA_QuitOnClose, false);
     new QShortcut(QKeySequence(QKeySequence::Close), this, SLOT(fadeOut()));
     connect(mResultList, SIGNAL(clicked(QModelIndex)), this, SLOT(invoke(QModelIndex)));
-    layout->setMargin(10);
-    layout->setSpacing(10);
-    layout->addWidget(mSearchInput, 0, Qt::AlignTop);
-    layout->addWidget(mResultList);
+    mLayout->setMargin(10);
+    mLayout->setSpacing(10);
+    mLayout->addWidget(mSearchInput, 0, Qt::AlignTop);
+    mLayout->addWidget(mResultList);
+
+    mResultList->hide();
 
     connect(mSearchInput, SIGNAL(textChanged(QString)), this, SLOT(startSearch(QString)));
+
     Config config;
-    resize(config.value<int>("width", 500), config.value<int>("height", 500));
+    mWidth = config.value<int>("width", 500);
+    mResultHiddenHeight = config.value<int>("noresultsHeight", 70);
+    mResultShownHeight = config.value<int>("height", 500);
+
+    resize(mWidth, mResultHiddenHeight);
 
     const int keycode = config.value<int>(QLatin1String("shortcutKeycode"), 49); // 49 = space
     const int modifier = config.value<int>(QLatin1String("shortcutModifier"), 256); // 256 = cmd
@@ -138,6 +145,11 @@ void Chooser::startSearch(const QString& input)
 {
     QList<Match> matches = mSearchModel->matches(input);
     mResultList->setMatches(matches);
+
+    if (matches.isEmpty())
+        hideResultList();
+    else
+        showResultList();
 }
 
 void Chooser::showEvent(QShowEvent *e)
@@ -220,6 +232,27 @@ void Chooser::invoke(const QModelIndex &index)
 void Chooser::fadeOut()
 {
     ::animate(this, false);
+}
+
+void Chooser::hideResultList()
+{
+    if (mResultList->isHidden())
+        return;
+
+    mResultList->hide();
+    mLayout->removeWidget(mResultList);
+    setMinimumHeight(70); // ### why is this needed?
+    resize(mWidth, mResultHiddenHeight);
+}
+
+void Chooser::showResultList()
+{
+    if (!mResultList->isHidden())
+        return;
+
+    mLayout->addWidget(mResultList);
+    mResultList->show();
+    resize(mWidth, mResultShownHeight);
 }
 
 bool Chooser::event(QEvent *e)

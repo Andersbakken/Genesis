@@ -6,6 +6,7 @@
 class GlobalShortcut;
 class Model;
 class ResultList;
+class QVBoxLayout;
 
 class Chooser : public QWidget
 {
@@ -23,11 +24,21 @@ private slots:
     void shortcutActivated(int shortcut);
 
 private:
+    void showResultList();
+    void hideResultList();
+
+private:
     QLineEdit* mSearchInput;
     Model* mSearchModel;
     ResultList* mResultList;
     GlobalShortcut* mShortcut;
     int mActivateId;
+
+    QVBoxLayout* mLayout;
+
+    int mWidth;
+    int mResultHiddenHeight;
+    int mResultShownHeight;
 };
 
 #endif // CHOOSER_H
