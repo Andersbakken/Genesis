@@ -64,9 +64,9 @@ QList<Match> Model::matches(const QString &text) const
             Q_ASSERT(slash != -1);
             const QString name = ::name(item.filePath);
             if (name.startsWith(text, Qt::CaseInsensitive)) {
-                matches.append(Match(Match::Application, name, item.filePath,
-                                     item.iconPath.isEmpty() ? mFileIconProvider.icon(QFileInfo(item.filePath)) :
-                                     QIcon(item.iconPath)));
+                matches.append(Match(Match::Application, name, item.filePath, item.iconPath.isEmpty()
+                                     ? mFileIconProvider.icon(QFileInfo(item.filePath))
+                                     : QIcon(item.iconPath)));
             }
         }
         qSort(matches.begin(), matches.end(), lessThan);
