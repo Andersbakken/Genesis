@@ -88,5 +88,4 @@ void GlobalShortcut::unregisterShortcut()
 void GlobalShortcut::notify()
 {
     priv->toplevel->show();
-    priv->toplevel->raise();
 }

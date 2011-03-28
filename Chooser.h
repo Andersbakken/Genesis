@@ -13,6 +13,7 @@ public:
     Chooser(QWidget* parent = 0);
     void showEvent(QShowEvent *e);
     void keyPressEvent(QKeyEvent *e);
+    bool event(QEvent *e);
 
 private slots:
     void fadeOut();

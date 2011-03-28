@@ -61,7 +61,7 @@ void Chooser::showEvent(QShowEvent *e)
     activateWindow();
     ::animate(this, true);
 
-
+    mSearchInput->selectAll();
     QWidget::showEvent(e);
 }
 
@@ -123,4 +123,11 @@ void Chooser::invoke(const QModelIndex &index)
 void Chooser::fadeOut()
 {
     ::animate(this, false);
+}
+bool Chooser::event(QEvent *e)
+{
+    if (e->type() == QEvent::WindowDeactivate) {
+        fadeOut();
+    }
+    return QWidget::event(e);
 }
