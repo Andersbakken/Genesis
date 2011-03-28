@@ -4,6 +4,13 @@
 #include <QDebug>
 #ifdef Q_OS_MAC
 #include <Carbon/Carbon.h>
+
+struct Shortcut
+{
+    GlobalShortcut* creator;
+    EventHotKeyRef* keyref;
+};
+
 #endif
 
 class GlobalShortcutPrivate
@@ -13,6 +20,20 @@ public:
         : shortcut(s)
     {
     }
+    ~GlobalShortcutPrivate()
+    {
+#ifdef Q_OS_MAC
+        QHash<int, Shortcut>::iterator it = shortcuts.begin();
+        while (it != shortcuts.end()) {
+            if (it.value().creator == shortcut) {
+                UnregisterEventHotKey(*(it.value().keyref));
+                delete it.value().keyref;
+                it = shortcuts.erase(it);
+            } else
+                ++it;
+        }
+#endif
+    }
 
     GlobalShortcut* shortcut;
 
@@ -21,11 +42,11 @@ public:
         emit shortcut->activated(code);
     }
 #ifdef Q_OS_MAC
-    static QHash<int, EventHotKeyRef*> keyref;
+    static QHash<int, Shortcut> shortcuts;
 #endif
 };
 
-QHash<int, EventHotKeyRef*> GlobalShortcutPrivate::keyref;
+QHash<int, Shortcut> GlobalShortcutPrivate::shortcuts;
 
 #ifdef Q_OS_MAC
 static OSStatus hotKeyHandler(EventHandlerCallRef nextHandler, EventRef event, void *userData)
@@ -71,7 +92,7 @@ int GlobalShortcut::registerShortcut(int keycode, int modifier)
     static int id = 1;
 
 #ifdef Q_OS_MAC
-    while (GlobalShortcutPrivate::keyref.contains(id))
+    while (GlobalShortcutPrivate::shortcuts.contains(id))
         ++id;
 
     EventHotKeyRef* ref = new EventHotKeyRef;
@@ -80,7 +101,10 @@ int GlobalShortcut::registerShortcut(int keycode, int modifier)
     keyid.id = id;
     RegisterEventHotKey(keycode, modifier, keyid, GetEventDispatcherTarget(), 0, ref);
 
-    GlobalShortcutPrivate::keyref[id] = ref;
+    Shortcut shortcut;
+    shortcut.creator = this;
+    shortcut.keyref = ref;
+    GlobalShortcutPrivate::shortcuts[id] = shortcut;
 #endif
 
     return id++;
@@ -89,11 +113,14 @@ int GlobalShortcut::registerShortcut(int keycode, int modifier)
 void GlobalShortcut::unregisterShortcut(int id)
 {
 #ifdef Q_OS_MAC
-    QHash<int, EventHotKeyRef*>::iterator it = GlobalShortcutPrivate::keyref.find(id);
-    if (it != GlobalShortcutPrivate::keyref.end()) {
-        UnregisterEventHotKey(**it);
-        delete *it;
-        GlobalShortcutPrivate::keyref.erase(it);
+    QHash<int, Shortcut>::iterator it = GlobalShortcutPrivate::shortcuts.find(id);
+    if (it != GlobalShortcutPrivate::shortcuts.end()) {
+        if (it.value().creator != this)
+            return;
+
+        UnregisterEventHotKey(*(it.value().keyref));
+        delete it.value().keyref;
+        GlobalShortcutPrivate::shortcuts.erase(it);
     }
 #endif
 }
