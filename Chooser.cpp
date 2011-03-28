@@ -5,7 +5,7 @@
 #include "ResultList.h"
 #include "ResultModel.h"
 
-static void animate(QWidget *target, bool enter)
+static void animate(QWidget *target, bool enter, int heightdiff = 0)
 {
     static const bool enableOpacityAnimation = Config().isEnabled("opacityAnimation", true);
     static const bool enablePositionAnimation = Config().isEnabled("positionAnimation", true);
@@ -13,6 +13,8 @@ static void animate(QWidget *target, bool enter)
     r.moveCenter(qApp->desktop()->screenGeometry(target).center());
     if (!enter) {
         r.moveBottom(0);
+    } else {
+        r.moveBottom(r.bottom() - heightdiff);
     }
 
     if (!enablePositionAnimation)
@@ -163,7 +165,7 @@ void Chooser::showEvent(QShowEvent *e)
 
     raise();
     activateWindow();
-    ::animate(this, true);
+    ::animate(this, true, (mResultShownHeight - mResultHiddenHeight) / 2);
 
     if (!mSearchInput->text().isEmpty()) {
         mSearchInput->selectAll();
