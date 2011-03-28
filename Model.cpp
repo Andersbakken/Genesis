@@ -52,9 +52,9 @@ static inline QIcon wikipediaIcon()
     return icon;
 }
 
-
 QList<Match> Model::matches(const QString &text) const
 {
+    // ### should match on stuff like "word" for "Microsoft Word"
     QList<Match> matches;
     if (!text.isEmpty()) {
         const int count = mItems.size();
