@@ -8,7 +8,7 @@
 static void animate(QWidget *target, bool enter, int heightdiff = 0)
 {
     static const bool enableOpacityAnimation = Config().isEnabled("opacityAnimation", true);
-    static const bool enablePositionAnimation = Config().isEnabled("positionAnimation", true);
+    static const bool enablePositionAnimation = Config().isEnabled("positionAnimation", false);
     QRect r = target->rect();
     r.moveCenter(qApp->desktop()->screenGeometry(target).center());
     if (!enter) {
@@ -88,10 +88,19 @@ void RoundedWidget::paintEvent(QPaintEvent* e)
     p.drawPath(path);
 }
 
+static inline QByteArray defaultSearchPaths()
+{
+#ifdef Q_OS_MAC
+    return "/Applications";
+#else
+    return qgetenv("PATH");
+#endif
+}
+
 Chooser::Chooser(QWidget *parent)
     : QWidget(parent, Qt::FramelessWindowHint), mSearchInput(new LineEdit(this)),
-      mSearchModel(new Model(QStringList() << "/Applications/", this)), mResultList(new ResultList(this)),
-      mShortcut(new GlobalShortcut(this))
+      mSearchModel(new Model(Config().value<QByteArray>("searchPaths", ::defaultSearchPaths()), this)),
+      mResultList(new ResultList(this)), mShortcut(new GlobalShortcut(this))
 {
     QVBoxLayout* layout = new QVBoxLayout(this);
     RoundedWidget* back = new RoundedWidget(this);
@@ -218,7 +227,11 @@ void Chooser::invoke(const QModelIndex &index)
     switch (type) {
     case Match::Application: {
         const QString path = index.data(ResultModel::FilePathRole).toString();
+#ifdef Q_OS_MAC
         QDesktopServices::openUrl(QUrl::fromLocalFile(path));
+#else
+        QProcess::startDetached(path);
+#endif
         mSearchModel->recordUserEntry(mSearchInput->text(), path);
         fadeOut();
         break; }

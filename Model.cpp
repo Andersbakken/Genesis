@@ -15,8 +15,8 @@ static QStringList defaultUrlHandlers()
     return ret;
 }
 
-Model::Model(const QStringList &roots, QObject *parent)
-    : QObject(parent), mRoots(roots), mFileSystemWatcher(0)
+Model::Model(const QByteArray &roots, QObject *parent)
+    : QObject(parent), mRoots(roots.split(':')), mFileSystemWatcher(0)
 {
     Config config;
     mUserEntries = config.value<QVariantMap>("userEntries");
@@ -70,8 +70,6 @@ QList<Match> Model::matches(const QString &text) const
         // $$$ This really should be a QMap<QString, QString> or a sorted stringlist or something
         for (int i=0; i<count; ++i) {
             const Item &item = mItems.at(i);
-            const int slash = item.filePath.lastIndexOf('/');
-            Q_ASSERT(slash != -1);
             const QString name = ::name(item.filePath);
             if (name.contains(rx)) {
                 const Match m(Match::Application, name, item.filePath, item.iconPath.isEmpty()
@@ -114,7 +112,7 @@ QList<Match> Model::matches(const QString &text) const
     return matches;
 }
 
-const QStringList & Model::roots() const
+const QList<QByteArray> & Model::roots() const
 {
     return mRoots;
 }

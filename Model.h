@@ -24,10 +24,10 @@ struct Match
 class Model : public QObject
 {
     Q_OBJECT
-    public:
-    Model(const QStringList &path, QObject *parent = 0);
+public:
+    Model(const QByteArray &paths, QObject *parent = 0);
     QList<Match> matches(const QString &text) const;
-    const QStringList &roots() const;
+    const QList<QByteArray> &roots() const;
     void recordUserEntry(const QString &input, const QString &path);
 public slots:
     void reload();
@@ -41,7 +41,7 @@ private:
         QString iconPath;
     };
     QList<Item> mItems;
-    const QStringList mRoots;
+    const QList<QByteArray> mRoots;
     QFileIconProvider mFileIconProvider;
     QFileSystemWatcher *mFileSystemWatcher;
     QVariantMap mUserEntries;
