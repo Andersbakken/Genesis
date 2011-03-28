@@ -3,6 +3,8 @@
 
 #include <QObject>
 
+// This class is not reentrant!
+
 class GlobalShortcutPrivate;
 
 class GlobalShortcut : public QObject
