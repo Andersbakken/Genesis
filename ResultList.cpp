@@ -25,7 +25,6 @@ void ResultList::setMatches(const QList<Match> &matches)
 }
 void ResultList::invoke(int idx)
 {
-    qDebug() << idx << mModel->rowCount(QModelIndex());
     if (idx < mModel->rowCount(QModelIndex()))
         emit clicked(mModel->index(idx));
 }

@@ -5,13 +5,15 @@
 #include "ResultModel.h"
 
 Chooser::Chooser(QWidget* parent)
-    : QWidget(parent)
+    : QWidget(parent, Qt::FramelessWindowHint)
     , mSearchInput(new LineEdit(this))
     , mSearchModel(Model::create(QStringList() << "/Applications/" << "/Applications/Microsoft Office 2011/", this))
     , mResultList(new ResultList(this))
 {
     connect(mResultList, SIGNAL(clicked(QModelIndex)), this, SLOT(invoke(QModelIndex)));
     QVBoxLayout* layout = new QVBoxLayout(this);
+    layout->setMargin(1);
+    layout->setSpacing(1);
     layout->addWidget(mSearchInput);
     layout->addWidget(mResultList);
     layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Fixed, QSizePolicy::MinimumExpanding));

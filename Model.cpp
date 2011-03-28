@@ -61,9 +61,16 @@ QList<Match> Model::matches(const QString &text) const
         }
     }
     qSort(matches.begin(), matches.end(), lessThan);
+    enum { MaxCount = 10 };
+    while (matches.size() > MaxCount) {
+        matches.removeLast();
+        // ### could do insertion sort and not add more than MaxCount then
+    }
     matches.append(Match(Match::Url, QString("Search Google for '%1'").arg(text),
                          "http://www.google.com/search?ie=UTF-8&q=" + QUrl::toPercentEncoding(text),
                          googleIcon()));
+    // command-G for the google one maybe?
+    
     return matches;
 }
 
