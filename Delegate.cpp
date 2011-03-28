@@ -25,7 +25,7 @@ void Delegate::paint(QPainter *painter, const QStyleOptionViewItem &option, cons
     enum { IconMargin = 2, Margin = 4 };
 
     const int iconDiffY = r.height() - iconSize;
-    QRect iconRect(r.x() + IconMargin, r.y() + iconDiffY / 2, iconSize, iconSize);
+    const QRect iconRect(r.x() + IconMargin, r.y() + iconDiffY / 2, iconSize, iconSize);
     icon.paint(painter, iconRect);
 
     r.setLeft(iconSize + IconMargin + Margin);
