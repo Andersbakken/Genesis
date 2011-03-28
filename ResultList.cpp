@@ -17,7 +17,11 @@ ResultList::ResultList(QWidget *parent)
     setModel(mModel);
     setItemDelegate(new Delegate(this));
 
-    setStyleSheet(QLatin1String("QListView { border: 1px solid rgb(160, 160, 160); background: rgb(200, 200, 200) }"));
+    QColor base = qApp->palette().color(QPalette::Base);
+    QColor highlight = qApp->palette().color(QPalette::Highlight);
+    setStyleSheet(QString("QListView { border: 1px solid rgb(%1, %2, %3); background: rgb(%4, %5, %6) }")
+                  .arg(highlight.red()).arg(highlight.green()).arg(highlight.blue())
+                  .arg(base.red()).arg(base.green()).arg(base.blue()));
 }
 
 void ResultList::clear()

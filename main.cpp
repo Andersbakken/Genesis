@@ -21,6 +21,8 @@ int main(int argc, char **argv)
 
     // Default palette entries
     pal.setColor(QPalette::Highlight, QColor(160, 160, 160));
+    pal.setColor(QPalette::Base, QColor(200, 200, 200));
+    pal.setColor(QPalette::BrightText, QColor(100, 100, 100));
 
     const QMetaObject &mo = QPalette::staticMetaObject;
     const QMetaEnum e = mo.enumerator(mo.indexOfEnumerator("ColorRole"));
@@ -43,6 +45,7 @@ int main(int argc, char **argv)
             }
         }
     }
+
     a.setPalette(pal);
 
     Chooser chooser;

@@ -51,7 +51,7 @@ void Delegate::paint(QPainter *painter, const QStyleOptionViewItem &option, cons
     QFont subFont(qApp->font());
     subFont.setPixelSize(subFont.pixelSize() / 2);
     painter->setFont(subFont);
-    painter->setPen(QColor(100, 100, 100));
+    painter->setPen(qApp->palette().color(QPalette::BrightText));
 
     const int subx1 = r.bottomLeft().x() - iconSize - IconMargin;
     const int subx2 = r.bottomRight().x();
