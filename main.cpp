@@ -44,10 +44,7 @@ int main(int argc, char **argv)
     }
     a.setPalette(pal);
 
-    const int keycode = config.value<int>(QLatin1String("shortcutKeycode"), 49); // 49 = space
-    const int modifier = config.value<int>(QLatin1String("shortcutModifier"), 256); // 256 = cmd
-
-    Chooser chooser(keycode, modifier);
+    Chooser chooser;
     chooser.show();
 
     return a.exec();

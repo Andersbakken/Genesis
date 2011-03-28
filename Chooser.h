@@ -11,7 +11,7 @@ class Chooser : public QWidget
 {
     Q_OBJECT
 public:
-    Chooser(int keycode, int modifier, QWidget* parent = 0);
+    Chooser(QWidget* parent = 0);
     void showEvent(QShowEvent *e);
     void keyPressEvent(QKeyEvent *e);
     bool event(QEvent *e);

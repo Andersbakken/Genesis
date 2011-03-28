@@ -40,7 +40,7 @@ static void animate(QWidget *target, bool enter)
     group->start(QAbstractAnimation::DeleteWhenStopped);
 }
 
-Chooser::Chooser(int keycode, int modifier, QWidget *parent)
+Chooser::Chooser(QWidget *parent)
     : QWidget(parent, Qt::FramelessWindowHint), mSearchInput(new LineEdit(this)),
       mSearchModel(new Model(QStringList() << "/Applications/", this)), mResultList(new ResultList(this)),
       mShortcut(new GlobalShortcut(this))
@@ -58,6 +58,8 @@ Chooser::Chooser(int keycode, int modifier, QWidget *parent)
     Config config;
     resize(config.value<int>("width", 500), config.value<int>("height", 500));
 
+    const int keycode = config.value<int>(QLatin1String("shortcutKeycode"), 49); // 49 = space
+    const int modifier = config.value<int>(QLatin1String("shortcutModifier"), 256); // 256 = cmd
     connect(mShortcut, SIGNAL(activated(int)), this, SLOT(shortcutActivated(int)));
     mActivateId = mShortcut->registerShortcut(keycode, modifier);
 }
