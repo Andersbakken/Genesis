@@ -84,6 +84,11 @@ GlobalShortcut::GlobalShortcut(QObject* parent)
     }
 }
 
+GlobalShortcut::~GlobalShortcut()
+{
+    delete priv;
+}
+
 int GlobalShortcut::registerShortcut(int keycode, int modifier)
 {
     static int id = 1;
