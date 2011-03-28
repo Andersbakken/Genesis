@@ -28,6 +28,7 @@ Chooser::Chooser(QWidget* parent)
     : QWidget(parent, Qt::FramelessWindowHint), mSearchInput(new LineEdit(this)),
       mSearchModel(new Model(QStringList() << "/Applications/", this)), mResultList(new ResultList(this))
 {
+    setAttribute(Qt::WA_QuitOnClose, false);
     new QShortcut(QKeySequence(QKeySequence::Close), this, SLOT(fadeOut()));
     connect(mResultList, SIGNAL(clicked(QModelIndex)), this, SLOT(invoke(QModelIndex)));
     QVBoxLayout* layout = new QVBoxLayout(this);
