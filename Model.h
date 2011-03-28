@@ -45,6 +45,7 @@ private:
     QFileIconProvider mFileIconProvider;
     QFileSystemWatcher *mFileSystemWatcher;
     QVariantMap mUserEntries;
+    QVariantList mUrlHandlers;
 };
 
 

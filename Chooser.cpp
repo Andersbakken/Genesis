@@ -37,7 +37,8 @@ Chooser::Chooser(QWidget* parent)
     layout->addWidget(mResultList);
 
     connect(mSearchInput, SIGNAL(textChanged(QString)), this, SLOT(startSearch(QString)));
-    resize(Config().value<QSize>("size", QSize(500, 500)));
+    Config config;
+    resize(config.value<int>("width", 500), config.value<int>("height", 500));
 }
 
 void Chooser::startSearch(const QString& input)
@@ -59,7 +60,7 @@ void Chooser::showEvent(QShowEvent *e)
     activateWindow();
     ::animate(this, true);
 
-    
+
     QWidget::showEvent(e);
 }
 
@@ -71,7 +72,7 @@ extern const Qt::KeyboardModifier numericModifier =
     Qt::AltModifier
 #endif
     ;
-    
+
 void Chooser::keyPressEvent(QKeyEvent *e)
 {
     switch (e->key()) {

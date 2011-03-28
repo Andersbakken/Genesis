@@ -6,12 +6,37 @@ static inline bool lessThan(const Match &left, const Match &right)
     return left.name.size() > right.name.size();
 }
 
+static QVariantList defaultUrlHandlers()
+{
+    QVariantList ret;
+    {
+        QMap<QString, QVariant> map;
+        map["url"] = "http://www.google.com/search?ie=UTF-8&q=%s";
+        map["icon"] = ":/google.ico";
+        ret.append(map);
+    }
+    {
+        QMap<QString, QVariant> map;
+        map["url"] = "http://en.wikipedia.org/wiki/Special:Search?search=%s&go=Go";
+        map["icon"] = ":/wikipedia.ico";
+        ret.append(map);
+    }
+    {
+        QMap<QString, QVariant> map;
+        map["url"] = "http://www.amazon.com/s?url=search-alias=aps&field-keywords=%s";
+        map["icon"] = ":/amazon.ico";
+        ret.append(map);
+    }
+
+    return ret;
+}
+
 Model::Model(const QStringList &roots, QObject *parent)
     : QObject(parent), mRoots(roots), mFileSystemWatcher(0)
 {
     Config config;
     mUserEntries = config.value<QVariantMap>("userEntries");
-    qDebug() << mUserEntries;
+    mUrlHandlers = config.value<QVariantList>("urlHandlers", defaultUrlHandlers());
     reload();
 }
 
@@ -34,18 +59,6 @@ static inline QIcon iconForPath(const QString &path)
         Q_ASSERT(qApp);
         return qApp->style()->standardIcon(QStyle::SP_FileIcon);
     }
-}
-
-static inline QIcon googleIcon()
-{
-    static const QIcon icon(":/google.ico");
-    return icon;
-}
-
-static inline QIcon wikipediaIcon()
-{
-    static const QIcon icon(":/wikipedia.ico");
-    return icon;
 }
 
 QList<Match> Model::matches(const QString &text) const
@@ -81,21 +94,23 @@ QList<Match> Model::matches(const QString &text) const
             if (foundPreviousUserEntry)
                 ++it;
             qSort(it, matches.end(), lessThan); // ### hm, what to do about this one
-            // enum { MaxCount = 10 };
-            // while (matches.size() > MaxCount) {
-            //     matches.removeLast();
-            //     // ### could do insertion sort and not add more than MaxCount then
-            // }
         }
-        matches.append(Match(Match::Url, QString("Search Google for '%1'").arg(text),
-                             "http://www.google.com/search?ie=UTF-8&q=" + QUrl::toPercentEncoding(text),
-                             googleIcon()));
-        extern const Qt::KeyboardModifier numericModifier;
-        matches.last().keySequence = QKeySequence(numericModifier | Qt::Key_G);
-        matches.append(Match(Match::Url, QString("Search Wikipedia for '%1'").arg(text),
-                             QString("http://en.wikipedia.org/wiki/Special:Search?search=%1&go=Go").
-                             arg(QString::fromUtf8(QUrl::toPercentEncoding(text))),
-                             wikipediaIcon()));
+        const int urlHandlerCount = mUrlHandlers.size(); // ### could store the matches and modify them here
+        for (int i=0; i<urlHandlerCount; ++i) {
+            QVariantMap map = qVariantValue<QVariantMap>(mUrlHandlers.at(i));
+            QString url = map.value("url").toString();
+            if (url.isEmpty()) {
+                qWarning() << "Invalid urlhandler" << map;
+                continue;
+            }
+            url.replace("%s", QUrl::toPercentEncoding(text));
+
+            QString name = map.value("name", text).toString();
+            name.replace("%s", text);
+
+            // ### clever default icon?
+            matches.append(Match(Match::Url, name, url, QIcon(map.value("icon").toString())));
+        }
     }
     return matches;
 }
