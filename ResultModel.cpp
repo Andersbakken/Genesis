@@ -42,6 +42,14 @@ QVariant ResultModel::data(const QModelIndex &index, int role) const
         return match.name;
     case Qt::DecorationRole:
         return match.icon;
+    case KeySequencesRole: {
+        extern const Qt::KeyboardModifier numericModifier;
+        QList<QKeySequence> ret;
+        if (!match.keySequence.isEmpty())
+            ret.append(match.keySequence);
+        ret.append(QKeySequence(numericModifier | (Qt::Key_1 + index.row())));
+        return qVariantFromValue(ret);
+    }
     default:
         break;
     }

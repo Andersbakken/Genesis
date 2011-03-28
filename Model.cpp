@@ -46,31 +46,45 @@ static inline QIcon googleIcon()
     return icon;
 }
 
+static inline QIcon wikipediaIcon()
+{
+    static const QIcon icon(":/wikipedia.ico");
+    return icon;
+}
+
+
 QList<Match> Model::matches(const QString &text) const
 {
     QList<Match> matches;
-    const int count = mItems.size();
-    for (int i=0; i<count; ++i) {
-        const Item &item = mItems.at(i);
-        const int slash = item.filePath.lastIndexOf('/');
-        Q_ASSERT(slash != -1);
-        const QString name = ::name(item.filePath);
-        if (name.startsWith(text, Qt::CaseInsensitive)) {
-            matches.append(Match(Match::Application, name, item.filePath,
-                                 item.iconPath.isEmpty() ? mFileIconProvider.icon(QFileInfo(item.filePath)) : QIcon(item.iconPath)));
+    if (!text.isEmpty()) {
+        const int count = mItems.size();
+        for (int i=0; i<count; ++i) {
+            const Item &item = mItems.at(i);
+            const int slash = item.filePath.lastIndexOf('/');
+            Q_ASSERT(slash != -1);
+            const QString name = ::name(item.filePath);
+            if (name.startsWith(text, Qt::CaseInsensitive)) {
+                matches.append(Match(Match::Application, name, item.filePath,
+                                     item.iconPath.isEmpty() ? mFileIconProvider.icon(QFileInfo(item.filePath)) : QIcon(item.iconPath)));
+            }
         }
+        qSort(matches.begin(), matches.end(), lessThan);
+        enum { MaxCount = 10 };
+        while (matches.size() > MaxCount) {
+            matches.removeLast();
+            // ### could do insertion sort and not add more than MaxCount then
+        }
+        matches.append(Match(Match::Url, QString("Search Google for '%1'").arg(text),
+                             "http://www.google.com/search?ie=UTF-8&q=" + QUrl::toPercentEncoding(text),
+                             googleIcon()));
+        extern const Qt::KeyboardModifier numericModifier;
+        matches.last().keySequence = QKeySequence(numericModifier | Qt::Key_G);
+        matches.append(Match(Match::Url, QString("Search Wikipedia for '%1'").arg(text),
+                             QString("http://en.wikipedia.org/wiki/Special:Search?search=%1&go=Go").
+                             arg(QString::fromUtf8(QUrl::toPercentEncoding(text))),
+                             wikipediaIcon()));
+        // command-G for the google one maybe?
     }
-    qSort(matches.begin(), matches.end(), lessThan);
-    enum { MaxCount = 10 };
-    while (matches.size() > MaxCount) {
-        matches.removeLast();
-        // ### could do insertion sort and not add more than MaxCount then
-    }
-    matches.append(Match(Match::Url, QString("Search Google for '%1'").arg(text),
-                         "http://www.google.com/search?ie=UTF-8&q=" + QUrl::toPercentEncoding(text),
-                         googleIcon()));
-    // command-G for the google one maybe?
-    
     return matches;
 }
 

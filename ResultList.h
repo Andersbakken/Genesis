@@ -1,13 +1,12 @@
 #ifndef RESULTLIST_H
 #define RESULTLIST_H
 
-#include <QWidget>
-#include <QListView>
+#include <QtGui>
 
 class Match;
 class ResultModel;
 
-class ResultList : public QWidget
+class ResultList : public QListView
 {
     Q_OBJECT
 public:
@@ -15,17 +14,12 @@ public:
 
     void clear();
     void setMatches(const QList<Match>& matches);
-    void invoke(int idx);
-    QListView *listView() const { return mView; }
 public slots:
     void up();
     void down();
     void enter();
-signals:
-    void clicked(const QModelIndex &index);
 private:
     ResultModel* mModel;
-    QListView* mView;
 };
 
 #endif // RESULTLIST_H

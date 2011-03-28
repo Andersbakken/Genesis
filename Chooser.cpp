@@ -14,16 +14,11 @@ Chooser::Chooser(QWidget* parent)
     QVBoxLayout* layout = new QVBoxLayout(this);
     layout->setMargin(1);
     layout->setSpacing(1);
-    layout->addWidget(mSearchInput);
+    layout->addWidget(mSearchInput, 0, Qt::AlignTop);
     layout->addWidget(mResultList);
-    layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Fixed, QSizePolicy::MinimumExpanding));
 
-    connect(mSearchInput, SIGNAL(returnPressed()), this, SLOT(execute()));
     connect(mSearchInput, SIGNAL(textChanged(QString)), this, SLOT(startSearch(QString)));
-}
-
-void Chooser::execute()
-{
+    resize(500, 500);
 }
 
 void Chooser::startSearch(const QString& input)
@@ -60,16 +55,20 @@ void Chooser::keyPressEvent(QKeyEvent *e)
             mSearchInput->clear(); // ### undoable?
         }
         break;
-    case Qt::Key_Up:
-    case Qt::Key_Down:
-        // QApplication::sendEvent(mResultList->listView(), e); // ### recurses, need a nicer fix for this/
-        break;
-    default:
-        if (e->modifiers() == numericModifier && e->key() >= Qt::Key_1 && e->key() <= Qt::Key_9) {
-            const int idx = e->key() - Qt::Key_1;
-            mResultList->invoke(idx);
+    default: {
+        const QKeySequence key(e->key() | e->modifiers());
+        const int count = mResultList->model()->rowCount();
+        for (int i=0; i<count; ++i) {
+            const QModelIndex idx = mResultList->model()->index(i, 0);
+            foreach(const QKeySequence &seq, qVariantValue<QList<QKeySequence> >(idx.data(ResultModel::KeySequencesRole))) {
+                if (key.matches(seq) == QKeySequence::ExactMatch) {
+                    invoke(idx);
+                    e->accept();
+                    return;
+                }
+            }
         }
-        break;
+        break; }
     }
 }
 

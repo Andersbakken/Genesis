@@ -16,6 +16,7 @@ struct Match
     {}
 
     QString name, filePath, url;
+    QKeySequence keySequence;
     QIcon icon;
 };
 

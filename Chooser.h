@@ -15,7 +15,6 @@ public:
     void keyPressEvent(QKeyEvent *e);
 
 private slots:
-    void execute();
     void startSearch(const QString& input);
     void invoke(const QModelIndex &index);
 

@@ -6,6 +6,7 @@
 
 class Match;
 
+Q_DECLARE_METATYPE(QList<QKeySequence>);
 class ResultModel : public QAbstractListModel
 {
     Q_OBJECT
@@ -13,7 +14,8 @@ public:
     enum Role {
         TypeRole = Qt::UserRole,
         FilePathRole,
-        UrlRole
+        UrlRole,
+        KeySequencesRole
     };
     ResultModel(QObject *parent = 0);
 
