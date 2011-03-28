@@ -107,6 +107,9 @@ QList<Match> Model::matches(const QString &text) const
             // ### clever default icon?
             matches.append(Match(Match::Url, name, url, QIcon(handler.at(2))));
         }
+        if (text.startsWith("http://")) {
+            matches.append(Match(Match::Url, "Open " + text, text, QIcon()));
+        }
     }
     return matches;
 }

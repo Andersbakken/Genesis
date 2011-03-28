@@ -18,9 +18,6 @@ int main(int argc, char **argv)
     a.setFont(font);
 
     QPalette pal = a.palette();
-    // pal.setColor(QPalette::Base, Qt::black);
-    // pal.setColor(QPalette::Text, Qt::white);
-
     const QMetaObject &mo = QPalette::staticMetaObject;
     const QMetaEnum e = mo.enumerator(mo.indexOfEnumerator("ColorRole"));
     const int count = e.keyCount();
