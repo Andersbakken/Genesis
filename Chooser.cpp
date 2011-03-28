@@ -123,7 +123,7 @@ Chooser::Chooser(QWidget *parent)
 
     Config config;
     mWidth = config.value<int>("width", 500);
-    mResultHiddenHeight = config.value<int>("noresultsHeight", 70);
+    mResultHiddenHeight = config.value<int>("noresultsHeight", mSearchInput->minimumHeight() + 40);
     mResultShownHeight = config.value<int>("height", 500);
 
     resize(mWidth, mResultHiddenHeight);
