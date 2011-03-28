@@ -11,8 +11,8 @@ void Delegate::paint(QPainter *painter, const QStyleOptionViewItem &option, cons
 {
     QIcon icon = qVariantValue<QIcon>(index.data(Qt::DecorationRole));
     enum { IconSize = 24 };
-    const bool isSelected = (index == mView->currentIndex());
-    if (isSelected) {
+    const bool isCurrent = (index == mView->currentIndex());
+    if (isCurrent) {
         painter->fillRect(option.rect, option.palette.highlight());
         painter->setPen(option.palette.highlightedText().color());
     } else {
@@ -25,5 +25,5 @@ void Delegate::paint(QPainter *painter, const QStyleOptionViewItem &option, cons
     painter->drawText(r, Qt::AlignLeft|Qt::AlignVCenter, index.data(Qt::DisplayRole).toString());
     r.setRight(r.right() - Margin);
     painter->drawText(r, Qt::AlignRight|Qt::AlignVCenter,
-                      isSelected ? QString("Enter") : QString("%1-%2").arg(QChar(0x2318)).arg(index.row() + 1));
+                      isCurrent ? QString("Enter") : QString("%1-%2").arg(QChar(0x2318)).arg(index.row() + 1));
 }
