@@ -10,9 +10,23 @@ INCLUDEPATH += .
 OBJECTS_DIR = .obj
 MOC_DIR = .moc
 
-# Input
-SOURCES += main.cpp Model.cpp ModelThread.cpp Chooser.cpp ResultList.cpp ResultModel.cpp LineEdit.cpp Delegate.cpp
-HEADERS += Model.h ModelThread.h Chooser.h ResultList.h ResultModel.h LineEdit.h Delegate.h
+HEADERS += Model.h \
+           ModelThread.h \
+           Chooser.h \
+           ResultList.h \
+           ResultModel.h \
+           LineEdit.h \
+           Delegate.h \
+           Config.h
+SOURCES += main.cpp \
+           Model.cpp \
+           ModelThread.cpp \
+           Chooser.cpp \
+           ResultList.cpp \
+           ResultModel.cpp \
+           LineEdit.cpp \
+           Delegate.cpp \
+           Config.cpp
 
 RESOURCES = Genesis.qrc
 
