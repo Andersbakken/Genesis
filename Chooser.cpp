@@ -6,21 +6,36 @@
 
 static void animate(QWidget *target, bool enter)
 {
-    QParallelAnimationGroup *group = new QParallelAnimationGroup;
-    QPropertyAnimation *opacityAnimation = new QPropertyAnimation(target, "windowOpacity", group);
-    opacityAnimation->setDuration(400);
-    opacityAnimation->setEndValue(enter ? 1.0 : 0.0);
-    QPropertyAnimation *positionAnimation = new QPropertyAnimation(target, "pos", group);
+    static const bool enableOpacityAnimation = Config().isEnabled("opacityAnimation", true);
+    static const bool enablePositionAnimation = Config().isEnabled("positionAnimation", true);
     QRect r = target->rect();
     r.moveCenter(qApp->desktop()->screenGeometry(target).center());
     if (!enter) {
         r.moveBottom(0);
-        QObject::connect(group, SIGNAL(finished()), target, SLOT(close()));
     }
 
-    positionAnimation->setDuration(200);
-    positionAnimation->setEasingCurve(QEasingCurve::InQuad);
-    positionAnimation->setEndValue(r.topLeft());
+    if (!enablePositionAnimation)
+        target->move(r.topLeft());
+    if (!enableOpacityAnimation)
+        target->setWindowOpacity(enter ? 1.0 : 0.0);
+    if (!enablePositionAnimation && !enableOpacityAnimation)
+        return;
+    QParallelAnimationGroup *group = new QParallelAnimationGroup;
+    if (enableOpacityAnimation) {
+        QPropertyAnimation *opacityAnimation = new QPropertyAnimation(target, "windowOpacity", group);
+        opacityAnimation->setDuration(400);
+        opacityAnimation->setEndValue(enter ? 1.0 : 0.0);
+    }
+    if (enablePositionAnimation) {
+        QPropertyAnimation *positionAnimation = new QPropertyAnimation(target, "pos", group);
+        positionAnimation->setDuration(200);
+        positionAnimation->setEasingCurve(QEasingCurve::InQuad);
+        positionAnimation->setEndValue(r.topLeft());
+    }
+
+    if (!enter)
+        QObject::connect(group, SIGNAL(finished()), target, SLOT(close()));
+
     group->start(QAbstractAnimation::DeleteWhenStopped);
 }
 
