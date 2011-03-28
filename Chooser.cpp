@@ -60,6 +60,10 @@ void Chooser::keyPressEvent(QKeyEvent *e)
             mSearchInput->clear(); // ### undoable?
         }
         break;
+    case Qt::Key_Up:
+    case Qt::Key_Down:
+        // QApplication::sendEvent(mResultList->listView(), e); // ### recurses, need a nicer fix for this/
+        break;
     default:
         if (e->modifiers() == numericModifier && e->key() >= Qt::Key_1 && e->key() <= Qt::Key_9) {
             const int idx = e->key() - Qt::Key_1;

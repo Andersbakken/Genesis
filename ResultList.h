@@ -16,6 +16,8 @@ public:
     void clear();
     void setMatches(const QList<Match>& matches);
     void invoke(int idx);
+    QListView *listView() const { return mView; }
+    void keyPressEvent(QKeyEvent *e);
 signals:
     void clicked(const QModelIndex &index);
 private:
