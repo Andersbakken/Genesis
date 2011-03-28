@@ -76,6 +76,8 @@ void Chooser::invoke(const QModelIndex &index)
         close();
         break;
     case Match::Url:
+        QDesktopServices::openUrl(index.data(ResultModel::UrlRole).toString());
+        close();
         break;
     case Match::None:
         break;

@@ -12,10 +12,10 @@ struct Match
     } type;
 
     Match(Type t, const QString &fn, const QString &fp, const QIcon &i)
-        : type(t), name(fn), filePath(fp), icon(i)
+        : type(t), name(fn), filePath(t == Application ? fp : QString()), url(t == Url ? fp : QString()), icon(i)
     {}
 
-    QString name, filePath;
+    QString name, filePath, url;
     QIcon icon;
 };
 

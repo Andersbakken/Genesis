@@ -28,15 +28,20 @@ QVariant ResultModel::data(const QModelIndex &index, int role) const
     if (row < 0 || row >= mMatches.size())
         return QVariant();
 
+    const Match &match = mMatches.at(row);
     switch (role) {
     case FilePathRole:
-        return mMatches.at(row).filePath;
+        Q_ASSERT(match.type == Match::Application);
+        return match.filePath;
+    case UrlRole:
+        Q_ASSERT(match.type == Match::Url);
+        return match.url;
     case TypeRole:
-        return mMatches.at(row).type;
+        return match.type;
     case Qt::DisplayRole:
-        return mMatches.at(row).name;
+        return match.name;
     case Qt::DecorationRole:
-        return mMatches.at(row).icon;
+        return match.icon;
     default:
         break;
     }

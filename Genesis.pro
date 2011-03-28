@@ -14,4 +14,6 @@ MOC_DIR = .moc
 SOURCES += main.cpp Model.cpp ModelThread.cpp Chooser.cpp ResultList.cpp ResultModel.cpp LineEdit.cpp
 HEADERS += Model.h ModelThread.h Chooser.h ResultList.h ResultModel.h LineEdit.h
 
+RESOURCES = Genesis.qrc
+
 CONFIG -= app_bundle

@@ -12,7 +12,8 @@ class ResultModel : public QAbstractListModel
 public:
     enum Role {
         TypeRole = Qt::UserRole,
-        FilePathRole
+        FilePathRole,
+        UrlRole
     };
     ResultModel(QObject *parent = 0);
 

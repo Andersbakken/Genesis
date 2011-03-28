@@ -40,6 +40,12 @@ static inline QIcon iconForPath(const QString &path)
     }
 }
 
+static inline QIcon googleIcon()
+{
+    static const QIcon icon(":/google.ico");
+    return icon;
+}
+
 QList<Match> Model::matches(const QString &text) const
 {
     QList<Match> matches;
@@ -53,6 +59,11 @@ QList<Match> Model::matches(const QString &text) const
             matches.append(Match(Match::Application, name, item.filePath,
                                  item.iconPath.isEmpty() ? mFileIconProvider.icon(QFileInfo(item.filePath)) : QIcon(item.iconPath)));
         }
+    }
+    if (matches.isEmpty()) {
+        matches.append(Match(Match::Url, QString("Search Google for '%1'").arg(text),
+                             "http://www.google.com/search?ie=UTF-8&q=" + QUrl::toPercentEncoding(text),
+                             googleIcon()));
     }
     qSort(matches.begin(), matches.end(), lessThan);
     return matches;
