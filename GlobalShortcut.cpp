@@ -25,6 +25,8 @@ public:
 #endif
 };
 
+QHash<int, EventHotKeyRef*> GlobalShortcutPrivate::keyref;
+
 #ifdef Q_OS_MAC
 static OSStatus hotKeyHandler(EventHandlerCallRef nextHandler, EventRef event, void *userData)
 {
