@@ -6,6 +6,7 @@
 ResultList::ResultList(QWidget *parent)
     : QListView(parent), mModel(new ResultModel(this))
 {
+    setPalette(qApp->palette()); // ### Am I supposed to do this?
     setSizePolicy(QSizePolicy::Minimum, QSizePolicy::MinimumExpanding);
     // ### need to send up and down to mView
     connect(new QShortcut(QKeySequence(Qt::Key_Up), window()), SIGNAL(activated()), this, SLOT(up()));

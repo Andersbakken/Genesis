@@ -2,6 +2,7 @@
 #define Model_h
 
 #include <QtGui>
+#include "Config.h"
 
 struct Match
 {
@@ -23,10 +24,11 @@ struct Match
 class Model : public QObject
 {
     Q_OBJECT
-public:
+    public:
     Model(const QStringList &path, QObject *parent = 0);
     QList<Match> matches(const QString &text) const;
     const QStringList &roots() const;
+    void recordUserEntry(const QString &input, const QString &path);
 public slots:
     void reload();
 signals:
@@ -42,6 +44,8 @@ private:
     const QStringList mRoots;
     QFileIconProvider mFileIconProvider;
     QFileSystemWatcher *mFileSystemWatcher;
+    QVariantMap mUserEntries;
+    QList<QStringList> mUrlHandlers;
 };
 
 

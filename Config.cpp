@@ -14,7 +14,6 @@ QVariant Config::valueFromCommandLine(const QString &key)
 {
     const QStringList args = QCoreApplication::arguments();
     QRegExp rx(QString("--?%1=(.*)").arg(key));
-    rx.setCaseSensitivity(Qt::CaseInsensitive);
     QVariant value;
     int arg = args.indexOf(rx);
     if (arg != -1) {
@@ -55,10 +54,7 @@ bool Config::store()
     static enum { DontStore = 0x0, Store = 0x1, Unset = 0x2 } state = Unset;
     if (state == Unset) {
         const QStringList args = QCoreApplication::arguments();
-        state = (args.contains("--store", Qt::CaseInsensitive)
-                 || args.contains("--save", Qt::CaseInsensitive)
-                 ? Store
-                 : DontStore);
+        state = (args.contains("--store") || args.contains("--save") ? Store : DontStore);
     }
 
     return (state == Store);

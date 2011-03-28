@@ -6,9 +6,30 @@ static inline bool lessThan(const Match &left, const Match &right)
     return left.name.size() > right.name.size();
 }
 
+static QStringList defaultUrlHandlers()
+{
+    QStringList ret;
+    ret << "%s|http://www.google.com/search?ie=UTF-8&q=%s|:/google.ico"
+        << "%s|http://en.wikipedia.org/wiki/Special:Search?search=%s&go=Go|:/wikipedia.ico"
+        << "%s|http://www.amazon.com/s?url=search-alias=aps&field-keywords=%s|:/amazon.ico";
+    return ret;
+}
+
 Model::Model(const QStringList &roots, QObject *parent)
     : QObject(parent), mRoots(roots), mFileSystemWatcher(0)
 {
+    Config config;
+    mUserEntries = config.value<QVariantMap>("userEntries");
+    const QStringList list = config.value<QStringList>("urlHandlers", defaultUrlHandlers());
+    foreach(const QString &string, list) {
+        const QStringList list = string.split('|', QString::SkipEmptyParts);
+        if (list.size() != 3 || list.at(1).isEmpty()) {
+            qWarning("Invalid url handler %s", qPrintable(string));
+            continue;
+        }
+        mUrlHandlers.append(list);
+    }
+
     reload();
 }
 
@@ -33,50 +54,56 @@ static inline QIcon iconForPath(const QString &path)
     }
 }
 
-static inline QIcon googleIcon()
-{
-    static const QIcon icon(":/google.ico");
-    return icon;
-}
-
-static inline QIcon wikipediaIcon()
-{
-    static const QIcon icon(":/wikipedia.ico");
-    return icon;
-}
-
 QList<Match> Model::matches(const QString &text) const
 {
     // ### should match on stuff like "word" for "Microsoft Word"
     QList<Match> matches;
+    QRegExp rx("\\b" + text);
+    rx.setCaseSensitivity(Qt::CaseInsensitive);
     if (!text.isEmpty()) {
         const int count = mItems.size();
+        bool foundPreviousUserEntry = false;
+        const QString userEntryPath = mUserEntries.value(text).toString();
+        // $$$ This really should be a QMap<QString, QString> or a sorted stringlist or something
         for (int i=0; i<count; ++i) {
             const Item &item = mItems.at(i);
             const int slash = item.filePath.lastIndexOf('/');
             Q_ASSERT(slash != -1);
             const QString name = ::name(item.filePath);
-            if (name.startsWith(text, Qt::CaseInsensitive)) {
-                matches.append(Match(Match::Application, name, item.filePath, item.iconPath.isEmpty()
-                                     ? mFileIconProvider.icon(QFileInfo(item.filePath))
-                                     : QIcon(item.iconPath)));
+            if (name.contains(rx)) {
+                const Match m(Match::Application, name, item.filePath, item.iconPath.isEmpty()
+                              ? mFileIconProvider.icon(QFileInfo(item.filePath))
+                              : QIcon(item.iconPath));
+                if (userEntryPath == item.filePath) {
+                    foundPreviousUserEntry = true;
+                    matches.prepend(m);
+                } else {
+                    matches.append(m);
+                }
             }
         }
-        qSort(matches.begin(), matches.end(), lessThan);
-        enum { MaxCount = 10 };
-        while (matches.size() > MaxCount) {
-            matches.removeLast();
-            // ### could do insertion sort and not add more than MaxCount then
+        if (matches.size() > 1) {
+            QList<Match>::iterator it = matches.begin();
+            if (foundPreviousUserEntry)
+                ++it;
+            qSort(it, matches.end(), lessThan); // ### hm, what to do about this one
         }
-        matches.append(Match(Match::Url, QString("Search Google for '%1'").arg(text),
-                             "http://www.google.com/search?ie=UTF-8&q=" + QUrl::toPercentEncoding(text),
-                             googleIcon()));
-        extern const Qt::KeyboardModifier numericModifier;
-        matches.last().keySequence = QKeySequence(numericModifier | Qt::Key_G);
-        matches.append(Match(Match::Url, QString("Search Wikipedia for '%1'").arg(text),
-                             QString("http://en.wikipedia.org/wiki/Special:Search?search=%1&go=Go").
-                             arg(QString::fromUtf8(QUrl::toPercentEncoding(text))),
-                             wikipediaIcon()));
+        const int urlHandlerCount = mUrlHandlers.size(); // ### could store the matches and modify them here
+        for (int i=0; i<urlHandlerCount; ++i) {
+            const QStringList &handler = mUrlHandlers.at(i);
+            QString url = handler.at(1);
+            url.replace("%s", QUrl::toPercentEncoding(text));
+
+            QString name = handler.at(0);
+            if (name.isEmpty()) {
+                name = text;
+            } else {
+                name.replace("%s", text);
+            }
+
+            // ### clever default icon?
+            matches.append(Match(Match::Url, name, url, QIcon(handler.at(2))));
+        }
     }
     return matches;
 }
@@ -90,4 +117,11 @@ void Model::reload()
 {
     ModelThread *thread = new ModelThread(this);
     thread->start();
+}
+
+void Model::recordUserEntry(const QString &input, const QString &path)
+{
+    mUserEntries[input] = path;
+    Config config;
+    config.setValue("userEntries", mUserEntries);
 }

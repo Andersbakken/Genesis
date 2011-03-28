@@ -2,6 +2,7 @@
 <qresource>
     <file>google.ico</file>
     <file>wikipedia.ico</file>
+    <file>amazon.ico</file>
 </qresource>
 </RCC>
 

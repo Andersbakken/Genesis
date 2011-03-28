@@ -25,11 +25,11 @@ static void animate(QWidget *target, bool enter)
 }
 
 Chooser::Chooser(QWidget* parent)
-    : QWidget(parent, Qt::FramelessWindowHint)
-    , mSearchInput(new LineEdit(this))
-    , mSearchModel(new Model(QStringList() << "/Applications/", this))
-    , mResultList(new ResultList(this))
+    : QWidget(parent, Qt::FramelessWindowHint), mSearchInput(new LineEdit(this)),
+      mSearchModel(new Model(QStringList() << "/Applications/", this)), mResultList(new ResultList(this))
 {
+    setAttribute(Qt::WA_QuitOnClose, false);
+    new QShortcut(QKeySequence(QKeySequence::Close), this, SLOT(fadeOut()));
     connect(mResultList, SIGNAL(clicked(QModelIndex)), this, SLOT(invoke(QModelIndex)));
     QVBoxLayout* layout = new QVBoxLayout(this);
     layout->setMargin(1);
@@ -38,18 +38,16 @@ Chooser::Chooser(QWidget* parent)
     layout->addWidget(mResultList);
 
     connect(mSearchInput, SIGNAL(textChanged(QString)), this, SLOT(startSearch(QString)));
-    resize(500, 500);
+    Config config;
+    resize(config.value<int>("width", 500), config.value<int>("height", 500));
 }
 
 void Chooser::startSearch(const QString& input)
 {
     QList<Match> matches = mSearchModel->matches(input);
     mResultList->setMatches(matches);
-    if (matches.isEmpty())
-        mResultList->hide();
-    else
-        mResultList->show();
 }
+
 void Chooser::showEvent(QShowEvent *e)
 {
     QRect r(QPoint(), size());
@@ -63,19 +61,19 @@ void Chooser::showEvent(QShowEvent *e)
     activateWindow();
     ::animate(this, true);
 
-    
+
     QWidget::showEvent(e);
 }
 
 // Should stick this kind of thing into some global config object
 extern const Qt::KeyboardModifier numericModifier =
 #ifdef Q_OS_MAC
-        Qt::ControlModifier
+    Qt::ControlModifier
 #else
-        Qt::AltModifier
+    Qt::AltModifier
 #endif
-        ;
-    
+    ;
+
 void Chooser::keyPressEvent(QKeyEvent *e)
 {
     switch (e->key()) {
@@ -107,10 +105,12 @@ void Chooser::invoke(const QModelIndex &index)
 {
     const Match::Type type = static_cast<Match::Type>(index.data(ResultModel::TypeRole).toInt());
     switch (type) {
-    case Match::Application:
-        QDesktopServices::openUrl(QUrl::fromLocalFile(index.data(ResultModel::FilePathRole).toString()));
+    case Match::Application: {
+        const QString path = index.data(ResultModel::FilePathRole).toString();
+        QDesktopServices::openUrl(QUrl::fromLocalFile(path));
+        mSearchModel->recordUserEntry(mSearchInput->text(), path);
         fadeOut();
-        break;
+        break; }
     case Match::Url:
         QDesktopServices::openUrl(index.data(ResultModel::UrlRole).toString());
         fadeOut();
