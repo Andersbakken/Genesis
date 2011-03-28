@@ -243,7 +243,7 @@ void Chooser::hideResultList()
 
     mResultList->hide();
     mLayout->removeWidget(mResultList);
-    setMinimumHeight(70); // ### why is this needed?
+    setMinimumHeight(mResultHiddenHeight); // ### why is this needed?
     resize(mWidth, mResultHiddenHeight);
 }
 
