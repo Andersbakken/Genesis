@@ -30,4 +30,4 @@ SOURCES += main.cpp \
 
 RESOURCES = Genesis.qrc
 
-CONFIG -= app_bundle
+QMAKE_INFO_PLIST = Info.plist
