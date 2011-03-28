@@ -19,10 +19,15 @@ void Delegate::paint(QPainter *painter, const QStyleOptionViewItem &option, cons
     } else {
         painter->setPen(option.palette.text().color());
     }
-    icon.paint(painter, QRect(option.rect.x(), option.rect.y(), iconSize, iconSize));
     QRect r = option.rect;
-    enum { Margin = 4 };
-    r.setLeft(iconSize + Margin);
+
+    enum { IconMargin = 2, Margin = 4 };
+
+    const int iconDiffY = r.height() - iconSize;
+    QRect iconRect(r.x() + IconMargin, r.y() + iconDiffY / 2, iconSize, iconSize);
+    icon.paint(painter, iconRect);
+
+    r.setLeft(iconSize + IconMargin + Margin);
     painter->setFont(qApp->font()); // ### why do I have to do this?
     painter->drawText(r, Qt::AlignLeft|Qt::AlignVCenter, index.data(Qt::DisplayRole).toString());
     r.setRight(r.right() - Margin);
