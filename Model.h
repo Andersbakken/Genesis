@@ -12,13 +12,14 @@ struct Match
         Url
     } type;
 
-    Match(Type t, const QString &fn, const QString &fp, const QIcon &i)
-        : type(t), name(fn), filePath(t == Application ? fp : QString()), url(t == Url ? fp : QString()), icon(i)
+    Match(Type t, const QString &fn, const QString &fp, const QIcon &i, const QStringList &a = QStringList())
+        : type(t), name(fn), filePath(t == Application ? fp : QString()), url(t == Url ? fp : QString()), icon(i), arguments(a)
     {}
 
     QString name, filePath, url;
     QKeySequence keySequence;
     QIcon icon;
+    QStringList arguments;
 };
 
 class Model : public QObject
@@ -46,6 +47,7 @@ private:
     QFileSystemWatcher *mFileSystemWatcher;
     QVariantMap mUserEntries;
     QList<QStringList> mUrlHandlers;
+    QList<QStringList> mAppHandlers;
 };
 
 

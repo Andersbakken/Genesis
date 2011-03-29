@@ -15,7 +15,8 @@ public:
         TypeRole = Qt::UserRole,
         FilePathRole,
         UrlRole,
-        KeySequencesRole
+        KeySequencesRole,
+        ArgumentsRole
     };
     ResultModel(QObject *parent = 0);
 

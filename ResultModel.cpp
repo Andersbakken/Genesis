@@ -39,6 +39,8 @@ QVariant ResultModel::data(const QModelIndex &index, int role) const
         return match.url;
     case TypeRole:
         return match.type;
+    case ArgumentsRole:
+        return match.arguments;
     case Qt::DisplayRole:
         return match.name;
     case Qt::DecorationRole:

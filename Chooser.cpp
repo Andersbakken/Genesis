@@ -229,10 +229,17 @@ void Chooser::invoke(const QModelIndex &index)
     switch (type) {
     case Match::Application: {
         const QString path = index.data(ResultModel::FilePathRole).toString();
+        QStringList args = index.data(ResultModel::ArgumentsRole).toStringList();
 #ifdef Q_OS_MAC
-        QDesktopServices::openUrl(QUrl::fromLocalFile(path));
+        if (path.endsWith(QLatin1String(".app"))) {
+            if (!args.isEmpty())
+                args.prepend(QLatin1String("--args"));
+            args.prepend(path);
+            QProcess::startDetached(QLatin1String("open"), args);
+        } else
+            QProcess::startDetached(path, args);
 #else
-        QProcess::startDetached(path);
+        QProcess::startDetached(path, args);
 #endif
         mSearchModel->recordUserEntry(mSearchInput->text(), path);
         fadeOut();

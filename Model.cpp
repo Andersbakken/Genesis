@@ -15,6 +15,15 @@ static QStringList defaultUrlHandlers()
     return ret;
 }
 
+static QStringList defaultAppHandlers()
+{
+    QStringList ret;
+#ifdef Q_OS_MAC
+    ret << "Lock|/System/Library/CoreServices/Menu Extras/User.menu/Contents/Resources/CGSession|:/lock.png|-suspend";
+#endif
+    return ret;
+}
+
 Model::Model(const QByteArray &roots, QObject *parent)
     : QObject(parent), mRoots(roots.split(':')), mFileSystemWatcher(0)
 {
@@ -31,6 +40,17 @@ Model::Model(const QByteArray &roots, QObject *parent)
             continue;
         }
         mUrlHandlers.append(list);
+    }
+    list = config.value<QStringList>("appHandlers", defaultAppHandlers(), &ok);
+    if (ok && config.isEnabled("defaultAppHandlers", true))
+        list += defaultAppHandlers();
+    foreach(const QString &string, list) {
+        const QStringList list = string.split('|');
+        if (list.size() < 2) {
+            qWarning("Invalid app handler %s", qPrintable(string));
+            continue;
+        }
+        mAppHandlers.append(list);
     }
 
     reload();
@@ -76,6 +96,27 @@ QList<Match> Model::matches(const QString &text) const
                               ? mFileIconProvider.icon(QFileInfo(item.filePath))
                               : QIcon(item.iconPath));
                 if (userEntryPath == item.filePath) {
+                    foundPreviousUserEntry = true;
+                    matches.prepend(m);
+                } else {
+                    matches.append(m);
+                }
+            }
+        }
+        const int appHandlerCount = mAppHandlers.size();
+        for (int i = 0; i < appHandlerCount; ++i) {
+            const QStringList& handler = mAppHandlers.at(i);
+            QString name = handler.at(0);
+            QString filepath = handler.at(1);
+            const int handlerSize = handler.size();
+            QString icon = (handlerSize >= 3) ? handler.at(2) : QString();
+            QStringList args;
+            for (int i = 3; i < handlerSize; ++i) {
+                args << handler.at(i);
+            }
+            if (name.contains(rx)) {
+                const Match m(Match::Application, name, filepath, (icon.isEmpty() ? mFileIconProvider.icon(QFileInfo(filepath)) : QIcon(icon)), args);
+                if (userEntryPath == filepath) {
                     foundPreviousUserEntry = true;
                     matches.prepend(m);
                 } else {
