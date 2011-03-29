@@ -103,7 +103,9 @@ Chooser::Chooser(QWidget *parent)
       mSearchModel(new Model(Config().value<QByteArray>("searchPaths", ::defaultSearchPaths()), this)),
       mResultList(new ResultList(this)), mShortcut(new GlobalShortcut(this))
 {
+#ifdef ENABLE_SERVER
     connect(Server::instance(), SIGNAL(commandReceived(QString)), this, SLOT(onCommandReceived(QString)));
+#endif
     QVBoxLayout* layout = new QVBoxLayout(this);
     RoundedWidget* back = new RoundedWidget(this);
     back->setFillColor(QColor(90, 90, 90, 210));
@@ -289,6 +291,7 @@ bool Chooser::event(QEvent *e)
     return QWidget::event(e);
 }
 
+#ifdef ENABLE_SERVER
 void Chooser::onCommandReceived(const QString &command)
 {
     if (command == "wakeup") {
@@ -305,3 +308,4 @@ void Chooser::onCommandReceived(const QString &command)
         qWarning("Unknown command received [%s]", qPrintable(command));
     }
 }
+#endif

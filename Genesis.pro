@@ -17,7 +17,6 @@ HEADERS += Chooser.h \
            Delegate.h \
            GlobalShortcut.h \
            LineEdit.h \
-           Server.h \
            Model.h \
            ModelThread.h \
            ResultList.h \
@@ -28,7 +27,6 @@ SOURCES += Chooser.cpp \
            Delegate.cpp \
            GlobalShortcut.cpp \
            LineEdit.cpp \
-           Server.cpp \
            Model.cpp \
            ModelThread.cpp \
            ResultList.cpp \
@@ -41,3 +39,15 @@ mac {
     QMAKE_INFO_PLIST = Info.plist
     LIBS += -framework Carbon
 }
+
+unix:!mac {
+    CONFIG += enable_server
+}
+
+enable_server {
+    DEFINES += ENABLE_SERVER
+    HEADERS += Server.h
+    SOURCES += Server.cpp
+}
+
+

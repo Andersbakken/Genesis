@@ -13,7 +13,7 @@ static void signalHandler(int signal)
     exit(signal);
 }
 #endif
-    
+
 int main(int argc, char **argv)
 {
 #if defined(ENABLE_SIGNAL_HANDLING) && defined (Q_OS_LINUX)
@@ -22,12 +22,13 @@ int main(int argc, char **argv)
     signal(SIGBUS, signalHandler);
     signal(SIGABRT, signalHandler);
 #endif
-    
+
     QApplication a(argc, argv);
     a.setOrganizationName("Genesis");
     a.setApplicationName("Genesis");
     a.setOrganizationDomain("https://github.com/Andersbakken/Genesis");
     Config config;
+#ifdef ENABLE_SERVER
     if (!Server::instance()->listen()) {
         QString command = "wakeup";
         const QStringList args = a.arguments();
@@ -46,6 +47,7 @@ int main(int argc, char **argv)
 
         return Server::write(command) ? 0 : 1;
     }
+#endif
 
     QFont font;
     const QString family = config.value<QString>("fontFamily");

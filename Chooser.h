@@ -18,7 +18,9 @@ public:
     bool event(QEvent *e);
 
 private slots:
+#ifdef ENABLE_SERVER
     void onCommandReceived(const QString &command);
+#endif
     void fadeOut();
     void startSearch(const QString& input);
     void invoke(const QModelIndex &index);

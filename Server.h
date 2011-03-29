@@ -1,6 +1,7 @@
 #ifndef Server_h
 #define Server_h
 
+#ifdef ENABLE_SERVER
 #include <QtNetwork>
 
 class Server : public QTcpServer
@@ -22,5 +23,5 @@ private:
     Server();
 };
 
-
+#endif
 #endif
