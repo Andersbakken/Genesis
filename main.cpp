@@ -2,38 +2,49 @@
 #include <QtNetwork>
 #include "Chooser.h"
 #include "Config.h"
-#include "LocalServer.h"
+#include "Server.h"
 
+#if defined(ENABLE_SIGNAL_HANDLING) && defined (Q_OS_LINUX)
+#include <signal.h>
+static void signalHandler(int signal)
+{
+    fprintf(stderr, "signal %d\n", signal);
+    delete sInstance;
+    exit(signal);
+}
+#endif
+    
 int main(int argc, char **argv)
 {
+#if defined(ENABLE_SIGNAL_HANDLING) && defined (Q_OS_LINUX)
+    signal(SIGINT, signalHandler);
+    signal(SIGSEGV, signalHandler);
+    signal(SIGBUS, signalHandler);
+    signal(SIGABRT, signalHandler);
+#endif
+    
     QApplication a(argc, argv);
     a.setOrganizationName("Genesis");
     a.setApplicationName("Genesis");
     a.setOrganizationDomain("https://github.com/Andersbakken/Genesis");
     Config config;
-    const QString serverName = config.value<QString>("localServerName", "Genesis");
-    if (!LocalServer::instance()->listen(serverName)) {
-        qDebug() << LocalServer::instance()->errorString() << serverName;
-        QLocalSocket socket;
-        socket.connectToServer(serverName);
-        if (!socket.waitForConnected(config.value<int>("localServerConnectionTimeout", 3000))) {
-            qWarning("Can't seem to connect to server");
-            return 1;
+    if (!Server::instance()->listen()) {
+        QString command = "wakeup";
+        const QStringList args = a.arguments();
+        const int count = args.size();
+        for (int i=1; i<count; ++i) {
+            const QString &arg = args.at(i);
+            if (arg == "--command" || arg == "-c") {
+                if (i + 1 == count) {
+                    qWarning("%s needs an argument", qPrintable(arg));
+                    return 2;
+                }
+                command = args.at(++i);
+                break;
+            }
         }
-        QByteArray data;
-        {
-            QDataStream ds(&data, QIODevice::WriteOnly);
-            ds << data.size();
-            ds << a.arguments();
-            ds.device()->seek(0);
-            ds << data.size();
-        }
-        socket.write(data);
-        if (!socket.waitForBytesWritten(config.value<int>("localServerConnectionTimeout", 3000))) {
-            qWarning("Can't seem to write to server");
-            return 1;
-        }
-        return 0;
+
+        return Server::write(command) ? 0 : 1;
     }
 
     QFont font;

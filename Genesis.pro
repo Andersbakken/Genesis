@@ -17,7 +17,7 @@ HEADERS += Chooser.h \
            Delegate.h \
            GlobalShortcut.h \
            LineEdit.h \
-           LocalServer.h \
+           Server.h \
            Model.h \
            ModelThread.h \
            ResultList.h \
@@ -28,7 +28,7 @@ SOURCES += Chooser.cpp \
            Delegate.cpp \
            GlobalShortcut.cpp \
            LineEdit.cpp \
-           LocalServer.cpp \
+           Server.cpp \
            Model.cpp \
            ModelThread.cpp \
            ResultList.cpp \

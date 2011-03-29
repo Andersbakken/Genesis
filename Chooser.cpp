@@ -4,6 +4,7 @@
 #include "Model.h"
 #include "ResultList.h"
 #include "ResultModel.h"
+#include "Server.h"
 
 static void animate(QWidget *target, bool enter, int heightdiff = 0)
 {
@@ -102,6 +103,7 @@ Chooser::Chooser(QWidget *parent)
       mSearchModel(new Model(Config().value<QByteArray>("searchPaths", ::defaultSearchPaths()), this)),
       mResultList(new ResultList(this)), mShortcut(new GlobalShortcut(this))
 {
+    connect(Server::instance(), SIGNAL(commandReceived(QString)), this, SLOT(onCommandReceived(QString)));
     QVBoxLayout* layout = new QVBoxLayout(this);
     RoundedWidget* back = new RoundedWidget(this);
     back->setFillColor(QColor(90, 90, 90, 210));
@@ -285,4 +287,16 @@ bool Chooser::event(QEvent *e)
         fadeOut();
     }
     return QWidget::event(e);
+}
+
+void Chooser::onCommandReceived(const QString &command)
+{
+    if (command == "wakeup") {
+        show();
+    } else if (command == "quit") {
+        close();
+        // ### restart?
+    } else {
+        qWarning("Unknown command received [%s]", qPrintable(command));
+    }
 }
