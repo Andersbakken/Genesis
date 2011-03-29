@@ -165,6 +165,8 @@ void Chooser::startSearch(const QString& input)
 
 void Chooser::showEvent(QShowEvent *e)
 {
+    setStyleSheet("border: none"); // ### This should really not be needed
+
     QRect r(QPoint(), size());
     r.moveCenter(qApp->desktop()->screenGeometry(this).center());
     r.moveBottom(0);
