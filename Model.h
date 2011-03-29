@@ -30,17 +30,22 @@ public:
     QList<Match> matches(const QString &text) const;
     const QList<QByteArray> &roots() const;
     void recordUserEntry(const QString &input, const QString &path);
+
+    static void registerItem();
 public slots:
     void reload();
 signals:
     void initialized();
     void progress(int current);
 private:
-    friend class ModelThread;
     struct Item {
         QString filePath;
         QString iconPath;
     };
+private slots:
+    void updateItems(const QList<Model::Item> &newItems);
+private:
+    friend class ModelThread;
     QList<Item> mItems;
     const QList<QByteArray> mRoots;
     QFileIconProvider mFileIconProvider;

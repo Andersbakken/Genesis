@@ -161,7 +161,13 @@ const QList<QByteArray> & Model::roots() const
 void Model::reload()
 {
     ModelThread *thread = new ModelThread(this);
+    connect(thread, SIGNAL(itemsReady(QList<Model::Item>)), this, SLOT(updateItems(QList<Model::Item>)), Qt::QueuedConnection);
     thread->start();
+}
+
+void Model::updateItems(const QList<Item> &newItems)
+{
+    mItems = newItems;
 }
 
 void Model::recordUserEntry(const QString &input, const QString &path)
@@ -177,4 +183,9 @@ void Model::recordUserEntry(const QString &input, const QString &path)
 
     Config config;
     config.setValue("userEntries", mUserEntries);
+}
+
+void Model::registerItem()
+{
+    qRegisterMetaType<QList<Model::Item> >("QList<Model::Item>");
 }

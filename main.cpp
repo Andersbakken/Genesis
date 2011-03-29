@@ -2,6 +2,7 @@
 #include <QtNetwork>
 #include "Chooser.h"
 #include "Config.h"
+#include "Model.h"
 #include "Server.h"
 
 #if defined(ENABLE_SIGNAL_HANDLING) && defined (Q_OS_LINUX)
@@ -86,6 +87,8 @@ int main(int argc, char **argv)
     }
 
     a.setPalette(pal);
+
+    Model::registerItem();
 
     Chooser chooser;
     chooser.show();

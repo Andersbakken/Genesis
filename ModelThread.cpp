@@ -32,6 +32,8 @@ void ModelThread::run()
 #endif
     };
 
+    mLocalItems.clear();
+
     for (int i=0; i<roots.size(); ++i) {
         recurse(roots.at(i), Config().value<int>("recurseDepth", DefaultRecurseDepth));
     }
@@ -39,6 +41,8 @@ void ModelThread::run()
     delete mModel->mFileSystemWatcher;
     mWatcher->addPaths(mWatchPaths.toList());
     mModel->mFileSystemWatcher = mWatcher;
+
+    emit itemsReady(mLocalItems);
 }
 
 void ModelThread::recurse(const QByteArray &path, int maxDepth)
@@ -66,7 +70,7 @@ void ModelThread::recurse(const QByteArray &path, int maxDepth)
                 mWatchPaths.insert(path);
                 strcpy(file, d->d_name);
                 const Model::Item item = { QString::fromUtf8(fileBuffer), findIconPath(fileBuffer) };
-                mModel->mItems.append(item);
+                mLocalItems.append(item);
             } else if (maxDepth > 1 && (d->d_namlen > 2 || (strcmp(".", d->d_name) && strcmp("..", d->d_name)))) {
                 recurse(path + '/' + reinterpret_cast<const char *>(d->d_name), maxDepth - 1);
             }
@@ -77,7 +81,7 @@ void ModelThread::recurse(const QByteArray &path, int maxDepth)
             if (!stat(fileBuffer, &s)) {
                 if (s.st_mode & S_IXOTH) {
                     const Model::Item item = { fileBuffer, findIconPath(fileBuffer) };
-                    mModel->mItems.append(item);
+                    mLocalItems.append(item);
                 }
             } else {
                 qWarning("Can't stat [%s]", fileBuffer);

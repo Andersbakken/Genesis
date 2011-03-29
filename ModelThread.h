@@ -10,10 +10,16 @@ public:
     ModelThread(Model *model);
     virtual void run();
     void recurse(const QByteArray &path, int maxDepth);
+
+signals:
+    void itemsReady(const QList<Model::Item> &newItems);
+
 private:
     Model *mModel;
     QSet<QString> mWatchPaths;
     QFileSystemWatcher *mWatcher;
+
+    QList<Model::Item> mLocalItems;
 };
 
 #endif
