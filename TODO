@@ -1,1 +1,3 @@
-Logging?
+Remember
+Use string map, not variantmap
+mmap database, probably not useful
