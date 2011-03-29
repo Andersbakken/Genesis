@@ -295,7 +295,12 @@ void Chooser::onCommandReceived(const QString &command)
         show();
     } else if (command == "quit") {
         close();
-        // ### restart?
+        QCoreApplication::quit();
+    } else if (command == "restart") {
+        Server::instance()->close();
+        QProcess::startDetached(QCoreApplication::arguments().first());
+        close();
+        QCoreApplication::quit();
     } else {
         qWarning("Unknown command received [%s]", qPrintable(command));
     }
