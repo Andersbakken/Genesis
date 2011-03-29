@@ -8,7 +8,13 @@
 
 static void animate(QWidget *target, bool enter, int heightdiff = 0)
 {
-    static const bool enableOpacityAnimation = Config().isEnabled("opacityAnimation", true);
+    static const bool enableOpacityAnimation = Config().isEnabled("opacityAnimation",
+#ifdef Q_OS_MAC
+                                                                  true
+#else
+                                                                  false
+#endif
+        );
     static const bool enablePositionAnimation = Config().isEnabled("positionAnimation", false);
     QRect r = target->rect();
     r.moveCenter(qApp->desktop()->screenGeometry(target).center());
