@@ -176,7 +176,8 @@ void Chooser::showEvent(QShowEvent *e)
 
     raise();
     activateWindow();
-    ::animate(this, true, (mResultShownHeight - mResultHiddenHeight) / 2);
+    const int animateHeight = mResultList->isHidden() ? (mResultShownHeight - mResultHiddenHeight) / 2 : 0;
+    ::animate(this, true, animateHeight);
 
     if (!mSearchInput->text().isEmpty()) {
         mSearchInput->selectAll();
