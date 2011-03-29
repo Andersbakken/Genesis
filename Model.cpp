@@ -170,12 +170,10 @@ void Model::recordUserEntry(const QString &input, const QString &path)
     if (!inputLength)
         return;
 
-    int pos = 1;
-    do {
-        QString entry = input.left(pos);
+    for (int i=0; i<inputLength; ++i) {
+        const QString entry = input.left(i + 1);
         mUserEntries[entry] = path;
-        ++pos;
-    } while (pos < inputLength);
+    }
 
     Config config;
     config.setValue("userEntries", mUserEntries);

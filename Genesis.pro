@@ -5,7 +5,7 @@
 TEMPLATE = app
 TARGET =
 DEPENDPATH += .
-INCLUDEPATH += .
+INCLUDEPATH += . 3rdParty/cJSON
 
 QT = core network gui
 
@@ -31,7 +31,8 @@ SOURCES += Chooser.cpp \
            ModelThread.cpp \
            ResultList.cpp \
            ResultModel.cpp \
-           main.cpp
+           main.cpp \
+           3rdParty/cJSON/cJSON.c
 
 RESOURCES = Genesis.qrc
 
