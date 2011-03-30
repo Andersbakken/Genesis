@@ -1,9 +1,14 @@
 #include "Model.h"
 #include <ModelThread.h>
 
-static inline bool lessThan(const Match &left, const Match &right)
+static inline bool matchLessThan(const Match &left, const Match &right)
 {
     return left.name.size() < right.name.size();
+}
+
+static inline bool indexLessThan(const Model::ItemIndex &left, const Model::ItemIndex &right)
+{
+    return left.key.toLower() < right.key.toLower();
 }
 
 static QStringList defaultUrlHandlers()
@@ -22,6 +27,11 @@ static QStringList defaultAppHandlers()
     ret << "Lock|/System/Library/CoreServices/Menu Extras/User.menu/Contents/Resources/CGSession|:/lock.png|-suspend";
 #endif
     return ret;
+}
+
+bool Model::ItemIndex::matches(const QString &text) const
+{
+    return key.toLower().startsWith(text);
 }
 
 Model::Model(const QByteArray &roots, QObject *parent)
@@ -81,28 +91,34 @@ QList<Match> Model::matches(const QString &text) const
 {
     // ### should match on stuff like "word" for "Microsoft Word"
     QList<Match> matches;
-    QRegExp rx("\\b" + text);
-    rx.setCaseSensitivity(Qt::CaseInsensitive);
     if (!text.isEmpty()) {
-        const int count = mItems.size();
+        QString match = text.toLower();
+
         bool foundPreviousUserEntry = false;
         const QString userEntryPath = mUserEntries.value(text).toString();
-        // $$$ This really should be a QMap<QString, QString> or a sorted stringlist or something
-        for (int i=0; i<count; ++i) {
-            const Item &item = mItems.at(i);
-            const QString name = ::name(item.filePath);
-            if (name.contains(rx)) {
-                const Match m(Match::Application, name, item.filePath, item.iconPath.isEmpty()
-                              ? mFileIconProvider.icon(QFileInfo(item.filePath))
-                              : QIcon(item.iconPath));
-                if (userEntryPath == item.filePath) {
+
+        ItemIndex findIndex;
+        findIndex.key = text;
+        QList<ItemIndex>::const_iterator found = qLowerBound(mItemIndex.begin(), mItemIndex.end(), findIndex, indexLessThan);
+        while (found != mItemIndex.end() && (*found).matches(match)) {
+            foreach(const Item* item, (*found).items) {
+                const Match m(Match::Application, ::name(item->filePath), item->filePath, item->iconPath.isEmpty()
+                              ? mFileIconProvider.icon(QFileInfo(item->filePath))
+                              : QIcon(item->iconPath));
+                if (userEntryPath == item->filePath) {
                     foundPreviousUserEntry = true;
                     matches.prepend(m);
                 } else {
                     matches.append(m);
                 }
             }
+
+            ++found;
         }
+
+        QRegExp rx("\\b" + text);
+        rx.setCaseSensitivity(Qt::CaseInsensitive);
+
         const int appHandlerCount = mAppHandlers.size();
         for (int i = 0; i < appHandlerCount; ++i) {
             const QStringList& handler = mAppHandlers.at(i);
@@ -128,7 +144,7 @@ QList<Match> Model::matches(const QString &text) const
             QList<Match>::iterator it = matches.begin();
             if (foundPreviousUserEntry)
                 ++it;
-            qSort(it, matches.end(), lessThan); // ### hm, what to do about this one
+            qSort(it, matches.end(), matchLessThan); // ### hm, what to do about this one
         }
         const int urlHandlerCount = mUrlHandlers.size(); // ### could store the matches and modify them here
         for (int i=0; i<urlHandlerCount; ++i) {
@@ -168,6 +184,41 @@ void Model::reload()
 void Model::updateItems(const QList<Item> &newItems)
 {
     mItems = newItems;
+    rebuildIndex();
+}
+
+void Model::rebuildIndex()
+{
+    mItemIndex.clear();
+
+    QList<ItemIndex>::iterator pos;
+    ItemIndex idx;
+    bool found;
+    QString itemText;
+
+    QStringList words;
+    foreach(const Item& item, mItems) {
+        itemText = ::name(item.filePath);
+        words = itemText.split(QLatin1Char(' '));
+        foreach(const QString& key, words) {
+            idx.key = key;
+            found = false;
+            pos = qLowerBound(mItemIndex.begin(), mItemIndex.end(), idx, indexLessThan);
+            if (pos != mItemIndex.end()) {
+                // Check if we found an exact match
+                if ((*pos).key == key) {
+                    // yay!
+                    (*pos).items.append(&item);
+                    found = true;
+                }
+            }
+            if (!found) { // insert a index
+                idx.items.clear();
+                idx.items.append(&item);
+                mItemIndex.insert(pos, idx);
+            }
+        }
+    }
 }
 
 void Model::recordUserEntry(const QString &input, const QString &path)

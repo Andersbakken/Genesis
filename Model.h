@@ -32,21 +32,30 @@ public:
     void recordUserEntry(const QString &input, const QString &path);
 
     static void registerItem();
+
+    struct Item {
+        QString filePath;
+        QString iconPath;
+    };
+    struct ItemIndex {
+        QString key;
+        QList<const Item*> items;
+
+        bool matches(const QString &text) const;
+    };
 public slots:
     void reload();
 signals:
     void initialized();
     void progress(int current);
-private:
-    struct Item {
-        QString filePath;
-        QString iconPath;
-    };
 private slots:
     void updateItems(const QList<Model::Item> &newItems);
 private:
+    void rebuildIndex();
+private:
     friend class ModelThread;
     QList<Item> mItems;
+    QList<ItemIndex> mItemIndex;
     const QList<QByteArray> mRoots;
     QFileIconProvider mFileIconProvider;
     QFileSystemWatcher *mFileSystemWatcher;
