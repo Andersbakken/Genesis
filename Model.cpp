@@ -174,11 +174,12 @@ void Model::rebuildIndex()
     }
 
     // Build the index
+    QStringList words;
+    QList<Model::ItemIndex>::iterator pos;
+    Model::ItemIndex idx;
+    bool found;
     foreach(const Item& item, mItems) {
-        QStringList words = item.name.split(QLatin1Char(' '));
-        QList<Model::ItemIndex>::iterator pos;
-        Model::ItemIndex idx;
-        bool found;
+        words = item.name.split(QLatin1Char(' '));
 
         foreach(const QString& key, words) {
             idx.key = key;
