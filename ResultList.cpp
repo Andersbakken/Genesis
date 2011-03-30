@@ -79,3 +79,12 @@ QSize ResultList::sizeHint() const
      // ### where does the number 11 come from here?
     return QSize(width(), (sizePerRow.height() * model()->rowCount()) + 11);
 }
+
+void ResultList::scrollTo(const QModelIndex &index, ScrollHint hint)
+{
+    // This function is reimplemented to avoid the list
+    // scrolling down when entering the last item in the list
+
+    Q_UNUSED(index)
+    Q_UNUSED(hint)
+}

@@ -16,6 +16,7 @@ public:
     void setMatches(const QList<Match>& matches);
 
     QSize sizeHint() const;
+    void scrollTo(const QModelIndex &index, ScrollHint hint);
 public slots:
     void up();
     void down();
