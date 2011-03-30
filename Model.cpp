@@ -1,6 +1,8 @@
 #include "Model.h"
 #include <ModelThread.h>
 
+#define MAX_MATCH_COUNT 9
+
 static inline bool matchLessThan(const Match &left, const Match &right)
 {
     return left.name.size() < right.name.size();
@@ -8,7 +10,7 @@ static inline bool matchLessThan(const Match &left, const Match &right)
 
 static inline bool indexLessThan(const Model::ItemIndex &left, const Model::ItemIndex &right)
 {
-    return left.key.toLower() < right.key.toLower();
+    return left.key < right.key;
 }
 
 static inline bool userEntryLessThan(const Model::UserEntry &left, const Model::UserEntry &right)
@@ -93,14 +95,19 @@ QList<Match> Model::matches(const QString &text) const
     if (!text.isEmpty()) {
         QString match = text.toLower();
 
-        const QHash<QString, int> userEntries = findUserEntries(text);
+        const QHash<QString, int> userEntries = findUserEntries(match);
         const QHash<QString, int>::const_iterator userEntriesEnd = userEntries.end();
-        QHash<QString, int>::const_iterator userEntriesPos = userEntries.end();
+        QHash<QString, int>::const_iterator userEntriesPos;
 
+        const int urlHandlerCount = mUrlHandlers.size();
+        const int maxMatches = MAX_MATCH_COUNT - urlHandlerCount;
+
+        int count = 0;
         ItemIndex findIndex;
-        findIndex.key = text;
+        findIndex.key = match;
         QList<ItemIndex>::const_iterator found = qLowerBound(mItemIndex.begin(), mItemIndex.end(), findIndex, indexLessThan);
-        while (found != mItemIndex.end() && (*found).matches(match)) {
+        const QList<ItemIndex>::const_iterator indexEnd = mItemIndex.end();
+        while (found != indexEnd && (*found).matches(match) && count < maxMatches) {
             foreach(const Item* item, (*found).items) {
                 const Match m(Match::Application, item->name, item->filePath, item->iconPath.isEmpty()
                               ? mFileIconProvider.icon(QFileInfo(item->filePath))
@@ -116,13 +123,14 @@ QList<Match> Model::matches(const QString &text) const
             }
 
             ++found;
+            ++count;
         }
 
         if (matches.size() > 1) {
             qSort(matches.begin(), matches.end(), matchLessThan); // ### hm, what to do about this one
         }
 
-        const int urlHandlerCount = mUrlHandlers.size(); // ### could store the matches and modify them here
+        // ### could store the matches and modify them here
         for (int i=0; i<urlHandlerCount; ++i) {
             const QStringList &handler = mUrlHandlers.at(i);
             QString url = handler.at(1);
@@ -193,7 +201,7 @@ void Model::rebuildIndex()
         words = item.name.split(QLatin1Char(' '));
 
         foreach(const QString& key, words) {
-            idx.key = key;
+            idx.key = key.toLower();
             found = false;
             pos = qLowerBound(mItemIndex.begin(), mItemIndex.end(), idx, indexLessThan);
             if (pos != mItemIndex.end()) {
@@ -217,15 +225,14 @@ QHash<QString, int> Model::findUserEntries(const QString &input) const
 {
     QHash<QString, int> paths;
 
-    QString match = input.toLower();
     UserEntry entry;
-    entry.input = match;
+    entry.input = input;
 
     int count = -1; // to be able to use prefix increase below
 
     QList<UserEntry>::const_iterator posend = mUserEntries.end();
     QList<UserEntry>::const_iterator pos = qLowerBound(mUserEntries.begin(), posend, entry, userEntryLessThan);
-    while (pos != posend && (*pos).matches(match)) {
+    while (pos != posend && (*pos).matches(input)) {
         foreach(const QString &path, (*pos).paths) {
             // ### this is not really optimal, should have some way of being able to do a conditional insert
             if (paths.contains(path))
