@@ -1,6 +1,8 @@
 #include "Config.h"
 #include <cJSON.h>
 
+QHash<QString, int> Config::sKeys;
+
 static QVariant fromJson(const cJSON *json)
 {
     Q_ASSERT(json);
@@ -145,4 +147,8 @@ void Config::writeValueToSettings(const QString &key, const QVariant &value)
 {
     mSettings->setValue(key, toJSON(value));
     mSettings->sync();
+}
+void Config::addKey(const QString &key, int id)
+{
+    sKeys[key] = id;
 }

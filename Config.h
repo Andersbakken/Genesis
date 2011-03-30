@@ -80,6 +80,7 @@ public:
 
         if (ok_in)
             *ok_in = !value.isNull();
+        addKey(key, qMetaTypeId<T>());
         return value.isNull() ? defaultValue: qVariantValue<T>(value);
     }
 
@@ -88,13 +89,16 @@ public:
         writeValueToSettings(key, qVariantFromValue<T>(t));
     }
 
+    static const QHash<QString, int> &keys() { return sKeys; }
 private:
+    static void addKey(const QString &key, int id);
     QVariant readValueFromSettings(const QString &key) const;
     void writeValueToSettings(const QString &key, const QVariant &value);
     bool store();
     static QVariant valueFromCommandLine(const QString &key);
     QSettings *mSettings;
     int mStore;
+    static QHash<QString, int> sKeys;
 };
 
 #endif
