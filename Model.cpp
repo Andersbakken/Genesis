@@ -11,6 +11,11 @@ static inline bool indexLessThan(const Model::ItemIndex &left, const Model::Item
     return left.key.toLower() < right.key.toLower();
 }
 
+static inline bool userEntryLessThan(const Model::UserEntry &left, const Model::UserEntry &right)
+{
+    return left.input < right.input;
+}
+
 static QStringList defaultUrlHandlers()
 {
     QStringList ret;
@@ -34,11 +39,16 @@ bool Model::ItemIndex::matches(const QString &text) const
     return key.toLower().startsWith(text);
 }
 
+bool Model::UserEntry::matches(const QString &text) const
+{
+    return input.startsWith(text);
+}
+
 Model::Model(const QByteArray &roots, QObject *parent)
     : QObject(parent), mRoots(roots.split(':')), mFileSystemWatcher(0)
 {
     Config config;
-    mUserEntries = config.value<QVariantMap>("userEntries");
+    restoreUserEntries(&config);
     bool ok;
     QStringList list = config.value<QStringList>("urlHandlers", defaultUrlHandlers(), &ok);
     if (ok && config.isEnabled("defaultUrlHandlers", true))
@@ -79,12 +89,13 @@ static inline QIcon iconForPath(const QString &path)
 QList<Match> Model::matches(const QString &text) const
 {
     // ### should match on stuff like "word" for "Microsoft Word"
-    QList<Match> matches;
+    QList<Match> matches, usermatches;
     if (!text.isEmpty()) {
         QString match = text.toLower();
 
-        bool foundPreviousUserEntry = false;
-        const QString userEntryPath = mUserEntries.value(text).toString();
+        const QHash<QString, int> userEntries = findUserEntries(text);
+        const QHash<QString, int>::const_iterator userEntriesEnd = userEntries.end();
+        QHash<QString, int>::const_iterator userEntriesPos = userEntries.end();
 
         ItemIndex findIndex;
         findIndex.key = text;
@@ -94,11 +105,13 @@ QList<Match> Model::matches(const QString &text) const
                 const Match m(Match::Application, item->name, item->filePath, item->iconPath.isEmpty()
                               ? mFileIconProvider.icon(QFileInfo(item->filePath))
                               : QIcon(item->iconPath), item->arguments);
-                if (userEntryPath == item->filePath) {
-                    foundPreviousUserEntry = true;
-                    matches.prepend(m);
-                } else {
+                if ((userEntriesPos = userEntries.find(item->filePath)) == userEntriesEnd) {
                     matches.append(m);
+                } else {
+                    int pos = userEntriesPos.value();
+                    if (pos >= usermatches.size())
+                        pos = usermatches.size();
+                    usermatches.insert(pos, m);
                 }
             }
 
@@ -106,11 +119,9 @@ QList<Match> Model::matches(const QString &text) const
         }
 
         if (matches.size() > 1) {
-            QList<Match>::iterator it = matches.begin();
-            if (foundPreviousUserEntry)
-                ++it;
-            qSort(it, matches.end(), matchLessThan); // ### hm, what to do about this one
+            qSort(matches.begin(), matches.end(), matchLessThan); // ### hm, what to do about this one
         }
+
         const int urlHandlerCount = mUrlHandlers.size(); // ### could store the matches and modify them here
         for (int i=0; i<urlHandlerCount; ++i) {
             const QStringList &handler = mUrlHandlers.at(i);
@@ -131,7 +142,7 @@ QList<Match> Model::matches(const QString &text) const
             matches.append(Match(Match::Url, "Open " + text, text, QIcon()));
         }
     }
-    return matches;
+    return usermatches + matches;
 }
 
 const QList<QByteArray> & Model::roots() const
@@ -165,7 +176,7 @@ void Model::rebuildIndex()
 
         item.name = handler.at(0);
         item.filePath = handler.at(1);
-        item.iconPath = (handlerSize >= 3) ? handler.at(2) : QString();
+        item.iconPath = (handlerSize > 2) ? handler.at(2) : QString();
         item.arguments.clear();
         for (int i = 3; i < handlerSize; ++i) {
             item.arguments << handler.at(i);
@@ -202,19 +213,83 @@ void Model::rebuildIndex()
     }
 }
 
+QHash<QString, int> Model::findUserEntries(const QString &input) const
+{
+    QHash<QString, int> paths;
+
+    QString match = input.toLower();
+    UserEntry entry;
+    entry.input = match;
+
+    int count = -1; // to be able to use prefix increase below
+
+    QList<UserEntry>::const_iterator posend = mUserEntries.end();
+    QList<UserEntry>::const_iterator pos = qLowerBound(mUserEntries.begin(), posend, entry, userEntryLessThan);
+    while (pos != posend && (*pos).matches(match)) {
+        foreach(const QString &path, (*pos).paths) {
+            // ### this is not really optimal, should have some way of being able to do a conditional insert
+            if (paths.contains(path))
+                continue;
+            paths[path] = ++count;
+        }
+
+        ++pos;
+    }
+
+    return paths;
+}
+
 void Model::recordUserEntry(const QString &input, const QString &path)
 {
     const int inputLength = input.length();
     if (!inputLength)
         return;
 
-    for (int i=0; i<inputLength; ++i) {
-        const QString entry = input.left(i + 1);
-        mUserEntries[entry] = path;
+    QString match = input.toLower();
+    UserEntry entry;
+    entry.input = match;
+
+    bool found = false;
+    QList<UserEntry>::iterator pos = qLowerBound(mUserEntries.begin(), mUserEntries.end(), entry, userEntryLessThan);
+    if (pos != mUserEntries.end()) {
+        if ((*pos).input == match) {
+            QList<QString>::iterator pathit = qFind((*pos).paths.begin(), (*pos).paths.end(), path);
+            if (pathit != (*pos).paths.end())
+                (*pos).paths.erase(pathit);
+            (*pos).paths.prepend(path);
+            found = true;
+        }
+    }
+    if (!found) {
+        entry.paths.append(path);
+        mUserEntries.insert(pos, entry);
     }
 
     Config config;
-    config.setValue("userEntries", mUserEntries);
+    saveUserEntries(&config);
+}
+
+void Model::restoreUserEntries(Config *config)
+{
+    QVariantList list = config->value<QVariantList>("userEntries");
+
+    UserEntry entry;
+    while (list.size() >= 2) {
+        entry.input = list.takeFirst().toString();
+        entry.paths = list.takeFirst().toStringList();
+        mUserEntries.append(entry);
+    }
+}
+
+void Model::saveUserEntries(Config *config)
+{
+    QVariantList list;
+    foreach(const UserEntry& entry, mUserEntries) {
+        list.append(entry.input);
+        list.append(entry.paths);
+    }
+
+    config->setValue("userEntries", list);
 }
 
 void Model::registerItem()

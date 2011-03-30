@@ -68,6 +68,12 @@ static cJSON *tocJSON(const QVariant &variant)
         for (QMap<QString, QVariant>::const_iterator it = map.begin(); it != map.end(); ++it)
             cJSON_AddItemToObject(ret, it.key().toUtf8().constData(), tocJSON(it.value()));
         break; }
+    case QVariant::StringList:
+        ret = cJSON_CreateArray();
+        Q_ASSERT(ret);
+        foreach(const QString &string, variant.toStringList())
+            cJSON_AddItemToArray(ret, tocJSON(string));
+        break;
     default:
         qWarning("Can't convert variant to json %d", variant.type());
     }

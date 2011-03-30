@@ -45,6 +45,12 @@ public:
 
         bool matches(const QString &text) const;
     };
+    struct UserEntry {
+        QString input;
+        QStringList paths;
+
+        bool matches(const QString &text) const;
+    };
 public slots:
     void reload();
 signals:
@@ -53,15 +59,19 @@ signals:
 private slots:
     void updateItems(const QList<Model::Item> &newItems);
 private:
+    void restoreUserEntries(Config* config);
+    void saveUserEntries(Config* config);
+    QHash<QString, int> findUserEntries(const QString &input) const;
     void rebuildIndex();
 private:
     friend class ModelThread;
+
     QList<Item> mItems;
     QList<ItemIndex> mItemIndex;
     const QList<QByteArray> mRoots;
     QFileIconProvider mFileIconProvider;
     QFileSystemWatcher *mFileSystemWatcher;
-    QVariantMap mUserEntries;
+    QList<UserEntry> mUserEntries;
     QList<QStringList> mUrlHandlers;
     QList<QStringList> mAppHandlers;
 };
