@@ -91,15 +91,17 @@ static inline QIcon iconForPath(const QString &path)
 QList<Match> Model::matches(const QString &text) const
 {
     // ### should match on stuff like "word" for "Microsoft Word"
-    QList<Match> matches, usermatches;
+    QList<Match> matches;
     if (!text.isEmpty()) {
         QString match = text.toLower();
 
         const QHash<QString, int> userEntries = findUserEntries(match);
         const QHash<QString, int>::const_iterator userEntriesEnd = userEntries.end();
         QHash<QString, int>::const_iterator userEntriesPos;
+        QMap<int, Match> usermatches;
 
         const int urlHandlerCount = mUrlHandlers.size();
+        const int userEntriesSize = userEntries.size();
         const int maxMatches = MAX_MATCH_COUNT - urlHandlerCount;
 
         int count = 0;
@@ -107,7 +109,7 @@ QList<Match> Model::matches(const QString &text) const
         findIndex.key = match;
         QList<ItemIndex>::const_iterator found = qLowerBound(mItemIndex.begin(), mItemIndex.end(), findIndex, indexLessThan);
         const QList<ItemIndex>::const_iterator indexEnd = mItemIndex.end();
-        while (found != indexEnd && (*found).matches(match) && count < maxMatches) {
+        while (found != indexEnd && (*found).matches(match)) {
             foreach(const Item* item, (*found).items) {
                 const Match m(Match::Application, item->name, item->filePath, item->iconPath.isEmpty()
                               ? mFileIconProvider.icon(QFileInfo(item->filePath))
@@ -115,10 +117,7 @@ QList<Match> Model::matches(const QString &text) const
                 if ((userEntriesPos = userEntries.find(item->filePath)) == userEntriesEnd) {
                     matches.append(m);
                 } else {
-                    int pos = userEntriesPos.value();
-                    if (pos >= usermatches.size())
-                        pos = usermatches.size();
-                    usermatches.insert(pos, m);
+                    usermatches.insert(userEntriesSize - userEntriesPos.value(), m);
                 }
             }
 
@@ -129,6 +128,13 @@ QList<Match> Model::matches(const QString &text) const
         if (matches.size() > 1) {
             qSort(matches.begin(), matches.end(), matchLessThan); // ### hm, what to do about this one
         }
+
+        foreach(const Match &m, usermatches) {
+            matches.prepend(m);
+        }
+
+        // ### not optimal at all
+        matches = matches.mid(0, maxMatches);
 
         // ### could store the matches and modify them here
         for (int i=0; i<urlHandlerCount; ++i) {
@@ -150,7 +156,7 @@ QList<Match> Model::matches(const QString &text) const
             matches.append(Match(Match::Url, "Open " + text, text, QIcon()));
         }
     }
-    return usermatches + matches;
+    return matches;
 }
 
 const QList<QByteArray> & Model::roots() const
