@@ -24,6 +24,8 @@ ResultList::ResultList(QWidget *parent)
     setStyleSheet(QString("QListView { border: 1px solid rgb(%1, %2, %3); background: rgb(%4, %5, %6) }")
                   .arg(highlight.red()).arg(highlight.green()).arg(highlight.blue())
                   .arg(base.red()).arg(base.green()).arg(base.blue()));
+
+    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 }
 
 void ResultList::clear()
@@ -62,3 +64,18 @@ void ResultList::enter()
         emit clicked(currentIndex());
 }
 
+QSize ResultList::sizeHint() const
+{
+    static QSize sizePerRow;
+    if (sizePerRow.isEmpty()) {
+        const QStyleOptionViewItem opt;
+        const QModelIndex idx;
+        sizePerRow = itemDelegate()->sizeHint(opt, idx);
+    }
+
+    if (sizePerRow.isEmpty())
+        return QListView::sizeHint();
+
+     // ### where does the number 11 come from here?
+    return QSize(width(), (sizePerRow.height() * model()->rowCount()) + 11);
+}

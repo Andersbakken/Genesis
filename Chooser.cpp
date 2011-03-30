@@ -282,11 +282,11 @@ void Chooser::hideResultList()
 
 void Chooser::showResultList()
 {
-    if (!mResultList->isHidden())
-        return;
+    const int newHeight = mResultHiddenHeight + mResultList->sizeHint().height();
+    setMinimumHeight(newHeight); // ### why oh why?
 
     mResultList->show();
-    resize(mWidth, mResultShownHeight);
+    resize(mWidth, newHeight);
 }
 
 bool Chooser::event(QEvent *e)

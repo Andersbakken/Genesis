@@ -14,6 +14,8 @@ public:
 
     void clear();
     void setMatches(const QList<Match>& matches);
+
+    QSize sizeHint() const;
 public slots:
     void up();
     void down();
