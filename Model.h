@@ -36,6 +36,8 @@ public:
     struct Item {
         QString filePath;
         QString iconPath;
+        QString name;
+        QStringList arguments;
     };
     struct ItemIndex {
         QString key;

@@ -66,17 +66,6 @@ Model::Model(const QByteArray &roots, QObject *parent)
     reload();
 }
 
-static inline QString name(const QString &path)
-{
-    const int lastSlash = path.lastIndexOf(QLatin1Char('/'));
-    Q_ASSERT(lastSlash != -1);
-#ifdef Q_OS_MAC
-    return path.mid(lastSlash + 1, path.size() - lastSlash - 5);
-#else
-    return path.mid(lastSlash + 1);
-#endif
-}
-
 static inline QIcon iconForPath(const QString &path)
 {
     if (!path.isEmpty()) {
@@ -102,9 +91,9 @@ QList<Match> Model::matches(const QString &text) const
         QList<ItemIndex>::const_iterator found = qLowerBound(mItemIndex.begin(), mItemIndex.end(), findIndex, indexLessThan);
         while (found != mItemIndex.end() && (*found).matches(match)) {
             foreach(const Item* item, (*found).items) {
-                const Match m(Match::Application, ::name(item->filePath), item->filePath, item->iconPath.isEmpty()
+                const Match m(Match::Application, item->name, item->filePath, item->iconPath.isEmpty()
                               ? mFileIconProvider.icon(QFileInfo(item->filePath))
-                              : QIcon(item->iconPath));
+                              : QIcon(item->iconPath), item->arguments);
                 if (userEntryPath == item->filePath) {
                     foundPreviousUserEntry = true;
                     matches.prepend(m);
@@ -116,30 +105,6 @@ QList<Match> Model::matches(const QString &text) const
             ++found;
         }
 
-        QRegExp rx("\\b" + text);
-        rx.setCaseSensitivity(Qt::CaseInsensitive);
-
-        const int appHandlerCount = mAppHandlers.size();
-        for (int i = 0; i < appHandlerCount; ++i) {
-            const QStringList& handler = mAppHandlers.at(i);
-            QString name = handler.at(0);
-            QString filepath = handler.at(1);
-            const int handlerSize = handler.size();
-            QString icon = (handlerSize >= 3) ? handler.at(2) : QString();
-            QStringList args;
-            for (int i = 3; i < handlerSize; ++i) {
-                args << handler.at(i);
-            }
-            if (name.contains(rx)) {
-                const Match m(Match::Application, name, filepath, (icon.isEmpty() ? mFileIconProvider.icon(QFileInfo(filepath)) : QIcon(icon)), args);
-                if (userEntryPath == filepath) {
-                    foundPreviousUserEntry = true;
-                    matches.prepend(m);
-                } else {
-                    matches.append(m);
-                }
-            }
-        }
         if (matches.size() > 1) {
             QList<Match>::iterator it = matches.begin();
             if (foundPreviousUserEntry)
@@ -191,15 +156,30 @@ void Model::rebuildIndex()
 {
     mItemIndex.clear();
 
-    QList<ItemIndex>::iterator pos;
-    ItemIndex idx;
-    bool found;
-    QString itemText;
+    // Add the default application entries
+    Item item;
+    const int appHandlerCount = mAppHandlers.size();
+    for (int i = 0; i < appHandlerCount; ++i) {
+        const QStringList& handler = mAppHandlers.at(i);
+        const int handlerSize = handler.size();
 
-    QStringList words;
+        item.name = handler.at(0);
+        item.filePath = handler.at(1);
+        item.iconPath = (handlerSize >= 3) ? handler.at(2) : QString();
+        item.arguments.clear();
+        for (int i = 3; i < handlerSize; ++i) {
+            item.arguments << handler.at(i);
+        }
+        mItems.append(item);
+    }
+
+    // Build the index
     foreach(const Item& item, mItems) {
-        itemText = ::name(item.filePath);
-        words = itemText.split(QLatin1Char(' '));
+        QStringList words = item.name.split(QLatin1Char(' '));
+        QList<Model::ItemIndex>::iterator pos;
+        Model::ItemIndex idx;
+        bool found;
+
         foreach(const QString& key, words) {
             idx.key = key;
             found = false;

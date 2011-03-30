@@ -19,6 +19,17 @@ static inline QString findIconPath(const QString &)
     return QString();
 }
 
+static inline QString name(const QString &path)
+{
+    const int lastSlash = path.lastIndexOf(QLatin1Char('/'));
+    Q_ASSERT(lastSlash != -1);
+#ifdef Q_OS_MAC
+    return path.mid(lastSlash + 1, path.size() - lastSlash - 5);
+#else
+    return path.mid(lastSlash + 1);
+#endif
+}
+
 void ModelThread::run()
 {
     Q_ASSERT(mModel);
@@ -69,7 +80,8 @@ void ModelThread::recurse(const QByteArray &path, int maxDepth)
             if (d->d_namlen > 4 && !strcmp(d->d_name + d->d_namlen - 4, ".app")) {
                 mWatchPaths.insert(path);
                 strcpy(file, d->d_name);
-                const Model::Item item = { QString::fromUtf8(fileBuffer), findIconPath(fileBuffer) };
+                const Model::Item item = { QString::fromUtf8(fileBuffer), findIconPath(fileBuffer),
+                                           name(QString::fromUtf8(fileBuffer)), QStringList() };
                 mLocalItems.append(item);
             } else if (maxDepth > 1 && (d->d_namlen > 2 || (strcmp(".", d->d_name) && strcmp("..", d->d_name)))) {
                 recurse(path + '/' + reinterpret_cast<const char *>(d->d_name), maxDepth - 1);
@@ -80,7 +92,7 @@ void ModelThread::recurse(const QByteArray &path, int maxDepth)
             strcpy(file, d->d_name);
             if (!stat(fileBuffer, &s)) {
                 if (s.st_mode & S_IXOTH) {
-                    const Model::Item item = { fileBuffer, findIconPath(fileBuffer) };
+                    const Model::Item item = { fileBuffer, findIconPath(fileBuffer), name(fileBuffer), QStringList() };
                     mLocalItems.append(item);
                 }
             } else {
