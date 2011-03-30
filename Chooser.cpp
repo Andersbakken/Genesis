@@ -261,13 +261,13 @@ void Chooser::invoke(const QModelIndex &index)
     case Match::None:
         break;
     }
-
-    mSearchInput->clear();
 }
 
 void Chooser::fadeOut()
 {
     ::animate(this, false);
+
+    mSearchInput->clear();
 }
 
 void Chooser::hideResultList()
