@@ -93,7 +93,7 @@ QList<Match> Model::matches(const QString &text) const
     // ### should match on stuff like "word" for "Microsoft Word"
     QList<Match> matches;
     if (!text.isEmpty()) {
-        QString match = text.toLower();
+        const QString match = text.toLower();
 
         const QHash<QString, int> userEntries = findUserEntries(match);
         const QHash<QString, int>::const_iterator userEntriesEnd = userEntries.end();
@@ -236,7 +236,7 @@ QHash<QString, int> Model::findUserEntries(const QString &input) const
 
     int count = -1; // to be able to use prefix increase below
 
-    QList<UserEntry>::const_iterator posend = mUserEntries.end();
+    const QList<UserEntry>::const_iterator posend = mUserEntries.end();
     QList<UserEntry>::const_iterator pos = qLowerBound(mUserEntries.begin(), posend, entry, userEntryLessThan);
     while (pos != posend && (*pos).matches(input)) {
         foreach(const QString &path, (*pos).paths) {
@@ -258,7 +258,7 @@ void Model::recordUserEntry(const QString &input, const QString &path)
     if (!inputLength)
         return;
 
-    QString match = input.toLower();
+    const QString match = input.toLower();
     UserEntry entry;
     entry.input = match;
 
@@ -266,7 +266,7 @@ void Model::recordUserEntry(const QString &input, const QString &path)
     QList<UserEntry>::iterator pos = qLowerBound(mUserEntries.begin(), mUserEntries.end(), entry, userEntryLessThan);
     if (pos != mUserEntries.end()) {
         if ((*pos).input == match) {
-            QList<QString>::iterator pathit = qFind((*pos).paths.begin(), (*pos).paths.end(), path);
+            const QList<QString>::iterator pathit = qFind((*pos).paths.begin(), (*pos).paths.end(), path);
             if (pathit != (*pos).paths.end())
                 (*pos).paths.erase(pathit);
             (*pos).paths.prepend(path);
