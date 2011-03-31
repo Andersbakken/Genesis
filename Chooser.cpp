@@ -162,7 +162,7 @@ void Chooser::shortcutActivated(int shortcut)
         return;
 
 #ifdef Q_OS_MAC
-    recordPreviousWindow();
+    PreviousProcess::recordWindow();
 #endif
 
     show();
@@ -260,14 +260,14 @@ void Chooser::invoke(const QModelIndex &index)
 #endif
         mSearchModel->recordUserEntry(mSearchInput->text(), path);
 #ifdef Q_OS_MAC
-        clearPreviousWindow();
+        PreviousProcess::clearWindow();
 #endif
         fadeOut();
         break; }
     case Match::Url:
         QDesktopServices::openUrl(index.data(ResultModel::UrlRole).toString());
 #ifdef Q_OS_MAC
-        clearPreviousWindow();
+        PreviousProcess::clearWindow();
 #endif
         fadeOut();
         break;
@@ -283,7 +283,7 @@ void Chooser::fadeOut()
     mSearchInput->clear();
 
 #ifdef Q_OS_MAC
-    activatePreviousWindow();
+    PreviousProcess::activateWindow();
 #endif
 }
 
@@ -310,7 +310,7 @@ bool Chooser::event(QEvent *e)
 {
     if (e->type() == QEvent::WindowDeactivate) {
 #ifdef Q_OS_MAC
-        clearPreviousWindow();
+        PreviousProcess::clearWindow();
 #endif
         fadeOut();
     }

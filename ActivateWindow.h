@@ -1,8 +1,10 @@
 #ifndef ACTIVATE_WINDOW_H
 #define ACTIVATE_WINDOW_H
 
-void recordPreviousWindow();
-void clearPreviousWindow();
-void activatePreviousWindow();
+namespace PreviousProcess {
+void recordWindow();
+void clearWindow();
+void activateWindow();
+}
 
 #endif
