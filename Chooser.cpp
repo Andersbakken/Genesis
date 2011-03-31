@@ -259,10 +259,16 @@ void Chooser::invoke(const QModelIndex &index)
         QProcess::startDetached(path, args);
 #endif
         mSearchModel->recordUserEntry(mSearchInput->text(), path);
+#ifdef Q_OS_MAC
+        clearPreviousWindow();
+#endif
         fadeOut();
         break; }
     case Match::Url:
         QDesktopServices::openUrl(index.data(ResultModel::UrlRole).toString());
+#ifdef Q_OS_MAC
+        clearPreviousWindow();
+#endif
         fadeOut();
         break;
     case Match::None:
