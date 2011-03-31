@@ -134,7 +134,8 @@ QList<Match> Model::matches(const QString &text) const
         }
 
         // ### not optimal at all
-        matches = matches.mid(0, maxMatches);
+        while (matches.size() > maxMatches)
+            matches.removeLast();
 
         // ### could store the matches and modify them here
         for (int i=0; i<urlHandlerCount; ++i) {
