@@ -7,12 +7,12 @@ static std::string previous;
 
 namespace PreviousProcess {
 
-void clearWindow()
+void clear()
 {
     previous.clear();
 }
 
-void recordWindow()
+void record()
 {
     previous.clear();
 
@@ -33,7 +33,7 @@ void recordWindow()
     previous = std::string([processName UTF8String]);
 }
 
-void activateWindow()
+void activate()
 {
     if (previous.length() == 0)
         return;

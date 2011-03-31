@@ -2,9 +2,9 @@
 #define ACTIVATE_WINDOW_H
 
 namespace PreviousProcess {
-void recordWindow();
-void clearWindow();
-void activateWindow();
+void record();
+void clear();
+void activate();
 }
 
 #endif
