@@ -5,6 +5,9 @@
 #include "ResultList.h"
 #include "ResultModel.h"
 #include "Server.h"
+#ifdef Q_OS_MAC
+#    include "ActivateWindow.h"
+#endif
 
 static void animate(QWidget *target, bool enter, int heightdiff = 0)
 {
@@ -158,6 +161,10 @@ void Chooser::shortcutActivated(int shortcut)
     if (shortcut != mActivateId)
         return;
 
+#ifdef Q_OS_MAC
+    recordPreviousWindow();
+#endif
+
     show();
     raise();
 }
@@ -268,6 +275,10 @@ void Chooser::fadeOut()
     ::animate(this, false);
 
     mSearchInput->clear();
+
+#ifdef Q_OS_MAC
+    activatePreviousWindow();
+#endif
 }
 
 void Chooser::hideResultList()
@@ -292,6 +303,9 @@ void Chooser::showResultList()
 bool Chooser::event(QEvent *e)
 {
     if (e->type() == QEvent::WindowDeactivate) {
+#ifdef Q_OS_MAC
+        clearPreviousWindow();
+#endif
         fadeOut();
     }
     return QWidget::event(e);

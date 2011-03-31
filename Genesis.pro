@@ -38,7 +38,10 @@ RESOURCES = Genesis.qrc
 
 mac {
     QMAKE_INFO_PLIST = Info.plist
-    LIBS += -framework Carbon
+    LIBS += -framework Carbon -framework Foundation
+
+    HEADERS += ActivateWindow.h
+    OBJECTIVE_SOURCES += ActivateWindow_mac.mm
 }
 
 unix:!mac {
