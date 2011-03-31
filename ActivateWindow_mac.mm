@@ -39,7 +39,7 @@ void activatePreviousWindow()
     NSString* stringscript =
         @"tell application \"System Events\"\n"
         @"  set frontmost of process \"";
-    stringscript = [stringscript stringByAppendingString:[NSString stringWithUTF8String:previous.c_str()]];
+    stringscript = [stringscript stringByAppendingString:[[NSString stringWithUTF8String:previous.c_str()] autorelease]];
     stringscript = [stringscript stringByAppendingString:
         @"\" to true\n"
         @"end tell\n"];
