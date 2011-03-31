@@ -25,9 +25,9 @@ void record()
     }
 
     NSDictionary* error = [[[NSDictionary alloc] init] autorelease];
-    NSAppleEventDescriptor* desc = [script executeAndReturnError:&error];
+    const NSAppleEventDescriptor* desc = [script executeAndReturnError:&error];
 
-    NSString* processName = [desc stringValue];
+    const NSString* processName = [desc stringValue];
     if (!processName || [processName length] == 0)
         return;
     previous = std::string([processName UTF8String]);
@@ -38,7 +38,7 @@ void activate()
     if (previous.length() == 0)
         return;
 
-    NSString* stringscript =
+    const NSString* stringscript =
         @"tell application \"System Events\"\n"
         @"  set frontmost of process \"";
     stringscript = [stringscript stringByAppendingString:[[NSString stringWithUTF8String:previous.c_str()] autorelease]];
@@ -46,7 +46,7 @@ void activate()
         @"\" to true\n"
         @"end tell\n"];
 
-    NSAppleScript* script = [[[NSAppleScript alloc] initWithSource:stringscript] autorelease];
+    const NSAppleScript* script = [[[NSAppleScript alloc] initWithSource:stringscript] autorelease];
 
     NSDictionary* error = [[[NSDictionary alloc] init] autorelease];
     [script executeAndReturnError:&error];
