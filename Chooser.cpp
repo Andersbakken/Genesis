@@ -46,9 +46,6 @@ static void animate(QWidget *target, bool enter, int heightdiff = 0)
         positionAnimation->setEndValue(r.topLeft());
     }
 
-    if (!enter)
-        QObject::connect(group, SIGNAL(finished()), target, SLOT(close()));
-
     group->start(QAbstractAnimation::DeleteWhenStopped);
 }
 
@@ -132,6 +129,7 @@ Chooser::Chooser(QWidget *parent)
 
     setAttribute(Qt::WA_TranslucentBackground);
     setAttribute(Qt::WA_QuitOnClose, false);
+
     new QShortcut(QKeySequence(QKeySequence::Close), this, SLOT(fadeOut()));
     connect(mResultList, SIGNAL(clicked(QModelIndex)), this, SLOT(invoke(QModelIndex)));
     layout->setMargin(10);
@@ -154,6 +152,10 @@ Chooser::Chooser(QWidget *parent)
     const int modifier = config.value<int>(QLatin1String("shortcutModifier"), 256); // 256 = cmd
     connect(mShortcut, SIGNAL(activated(int)), this, SLOT(shortcutActivated(int)));
     mActivateId = mShortcut->registerShortcut(keycode, modifier);
+
+    connect(&mKeepAlive, SIGNAL(timeout()), this, SLOT(keepAlive()));
+    mKeepAlive.setInterval(1000 * 60 * 10); // 10 minutes
+    mKeepAlive.start();
 }
 
 void Chooser::shortcutActivated(int shortcut)
@@ -165,8 +167,7 @@ void Chooser::shortcutActivated(int shortcut)
     PreviousProcess::record();
 #endif
 
-    show();
-    raise();
+    enable();
 }
 
 void Chooser::startSearch(const QString& input)
@@ -189,19 +190,18 @@ void Chooser::showEvent(QShowEvent *e)
     r.moveBottom(0);
 
     move(r.topLeft());
+
+    QWidget::showEvent(e);
+}
+
+void Chooser::enable()
+{
     setWindowOpacity(.0);
 
     raise();
     activateWindow();
     const int animateHeight = mResultList->isHidden() ? (mResultShownHeight - mResultHiddenHeight) / 2 : 0;
     ::animate(this, true, animateHeight);
-
-    if (!mSearchInput->text().isEmpty()) {
-        mSearchInput->selectAll();
-        startSearch(mSearchInput->text());
-    }
-
-    QWidget::showEvent(e);
 }
 
 // Should stick this kind of thing into some global config object
@@ -321,7 +321,7 @@ bool Chooser::event(QEvent *e)
 void Chooser::onCommandReceived(const QString &command)
 {
     if (command == "wakeup") {
-        show();
+        enable();
     } else if (command == "quit") {
         close();
         QCoreApplication::quit();
@@ -335,3 +335,15 @@ void Chooser::onCommandReceived(const QString &command)
     }
 }
 #endif
+
+void Chooser::keepAlive()
+{
+    // Keep the process in active memory
+    if (!isVisible()) {
+        QList<Match> matches = mSearchModel->matches(QLatin1String("a"));
+        foreach(const Match& m, matches) {
+            Q_UNUSED(m)
+        }
+    }
+
+}
