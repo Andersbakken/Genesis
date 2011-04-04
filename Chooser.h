@@ -25,6 +25,9 @@ private slots:
     void startSearch(const QString& input);
     void invoke(const QModelIndex &index);
     void shortcutActivated(int shortcut);
+    void keepAlive();
+
+    void enable();
 
 private:
     void showResultList();
@@ -36,6 +39,7 @@ private:
     ResultList* mResultList;
     GlobalShortcut* mShortcut;
     int mActivateId;
+    QTimer mKeepAlive;
 
     int mWidth;
     int mResultHiddenHeight;
