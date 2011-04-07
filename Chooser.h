@@ -7,6 +7,7 @@ class GlobalShortcut;
 class Model;
 class ResultList;
 class QVBoxLayout;
+class PreviousProcess;
 
 class Chooser : public QWidget
 {
@@ -40,6 +41,7 @@ private:
     GlobalShortcut* mShortcut;
     int mActivateId;
     QTimer mKeepAlive;
+    PreviousProcess* mPrevious;
 
     int mWidth;
     int mResultHiddenHeight;

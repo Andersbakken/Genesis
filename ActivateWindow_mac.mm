@@ -1,57 +1,58 @@
+#include "ActivateWindow.h"
 #include <Foundation/NSAppleScript.h>
 #include <Foundation/NSDictionary.h>
 #include <Foundation/NSString.h>
-#include <string>
+#include <Foundation/NSAutoreleasePool.h>
 
-static std::string previous;
-
-namespace PreviousProcess {
-
-void clear()
+ScriptWrapper ScriptCompiler::platformRun()
 {
-    previous.clear();
+    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+
+    NSAppleScript* script = [[NSAppleScript alloc] initWithSource:
+        @"tell application \"System Events\"\n"
+        @"  set frontmost of the first process whose frontmost is true to true\n"
+        @"end tell\n"];
+    NSDictionary* error = [[[NSDictionary alloc] init] autorelease];
+    [script compileAndReturnError:&error];
+
+    ScriptWrapper wrapper;
+    wrapper.script = script;
+
+    [pool drain];
+
+    return wrapper;
 }
 
-void record()
+void PreviousProcessPrivate::platformDestructor()
 {
-    previous.clear();
+    if (script) {
+        NSAppleScript* nsscript = reinterpret_cast<NSAppleScript*>(script);
+        [nsscript release];
+    }
+}
 
-    static NSAppleScript* script = 0;
-    if (!script) {
+void PreviousProcessPrivate::platformSetScript(const ScriptWrapper &wrapper)
+{
+    if (script) {
+        NSAppleScript* nsscript = reinterpret_cast<NSAppleScript*>(script);
+        [nsscript release];
+    }
+    script = wrapper.script;
+}
+
+void PreviousProcess::activate()
+{
+    NSAppleScript* script;
+
+    if (!priv->script) {
         script = [[NSAppleScript alloc] initWithSource:
             @"tell application \"System Events\"\n"
-            @"  get name of the first process whose frontmost is true\n"
+            @"  set frontmost of the first process whose frontmost is true to true\n"
             @"end tell\n"];
-    }
-
-    NSDictionary* error = [[[NSDictionary alloc] init] autorelease];
-    const NSAppleEventDescriptor* desc = [script executeAndReturnError:&error];
-
-    const NSString* processName = [desc stringValue];
-    if (!processName || [processName length] == 0)
-        return;
-    previous = std::string([processName UTF8String]);
-}
-
-void activate()
-{
-    if (previous.length() == 0)
-        return;
-
-    const NSString* stringscript =
-        @"tell application \"System Events\"\n"
-        @"  set frontmost of process \"";
-    stringscript = [stringscript stringByAppendingString:[[NSString stringWithUTF8String:previous.c_str()] autorelease]];
-    stringscript = [stringscript stringByAppendingString:
-        @"\" to true\n"
-        @"end tell\n"];
-
-    const NSAppleScript* script = [[[NSAppleScript alloc] initWithSource:stringscript] autorelease];
+        priv->script = script;
+    } else
+        script = reinterpret_cast<NSAppleScript*>(priv->script);
 
     NSDictionary* error = [[[NSDictionary alloc] init] autorelease];
     [script executeAndReturnError:&error];
-
-    previous.clear();
 }
-
-} // namespace

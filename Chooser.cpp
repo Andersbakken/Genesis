@@ -107,7 +107,8 @@ static inline QByteArray defaultSearchPaths()
 Chooser::Chooser(QWidget *parent)
     : QWidget(parent, Qt::FramelessWindowHint), mSearchInput(new LineEdit(this)),
       mSearchModel(new Model(Config().value<QByteArray>("searchPaths", ::defaultSearchPaths()), this)),
-      mResultList(new ResultList(this)), mShortcut(new GlobalShortcut(this))
+      mResultList(new ResultList(this)), mShortcut(new GlobalShortcut(this)),
+      mPrevious(new PreviousProcess(this))
 {
 #ifdef ENABLE_SERVER
     connect(Server::instance(), SIGNAL(commandReceived(QString)), this, SLOT(onCommandReceived(QString)));
@@ -130,7 +131,7 @@ Chooser::Chooser(QWidget *parent)
     setAttribute(Qt::WA_TranslucentBackground);
     setAttribute(Qt::WA_QuitOnClose, false);
 
-    new QShortcut(QKeySequence(QKeySequence::Close), this, SLOT(fadeOut()));
+    new QShortcut(QKeySequence(QKeySequence::Close), this, SLOT(disable()));
     connect(mResultList, SIGNAL(clicked(QModelIndex)), this, SLOT(invoke(QModelIndex)));
     layout->setMargin(10);
     layout->setSpacing(10);
@@ -154,7 +155,7 @@ Chooser::Chooser(QWidget *parent)
     mActivateId = mShortcut->registerShortcut(keycode, modifier);
 
     connect(&mKeepAlive, SIGNAL(timeout()), this, SLOT(keepAlive()));
-    mKeepAlive.setInterval(1000 * 60); // one minute
+    mKeepAlive.setInterval(1000 * 60 * 5); // five minutes
     mKeepAlive.start();
 }
 
@@ -163,14 +164,14 @@ void Chooser::shortcutActivated(int shortcut)
     if (shortcut != mActivateId)
         return;
 
-#ifdef Q_OS_MAC
-    PreviousProcess::record();
-#endif
-
     if (windowOpacity() < 1.)
         enable();
-    else
+    else {
         disable();
+#ifdef Q_OS_MAC
+        mPrevious->activate();
+#endif
+    }
 }
 
 void Chooser::startSearch(const QString& input)
@@ -201,10 +202,12 @@ void Chooser::showEvent(QShowEvent *e)
 
 void Chooser::enable()
 {
-    setWindowOpacity(.0);
+    mPrevious->compile();
 
+    setWindowOpacity(0.);
     raise();
     activateWindow();
+
     const int animateHeight = mResultList->isHidden() ? (mResultShownHeight - mResultHiddenHeight) / 2 : 0;
     ::animate(this, true, animateHeight);
 }
@@ -224,6 +227,9 @@ void Chooser::keyPressEvent(QKeyEvent *e)
     case Qt::Key_Escape:
         if (mSearchInput->text().isEmpty()) {
             disable();
+#ifdef Q_OS_MAC
+            mPrevious->activate();
+#endif
         } else {
             mSearchInput->clear(); // ### undoable?
         }
@@ -264,17 +270,17 @@ void Chooser::invoke(const QModelIndex &index)
         QProcess::startDetached(path, args);
 #endif
         mSearchModel->recordUserEntry(mSearchInput->text(), path);
-#ifdef Q_OS_MAC
-        PreviousProcess::clear();
-#endif
         disable();
+#ifdef Q_OS_MAC
+        mPrevious->activate();
+#endif
         break; }
     case Match::Url:
         QDesktopServices::openUrl(index.data(ResultModel::UrlRole).toString());
-#ifdef Q_OS_MAC
-        PreviousProcess::clear();
-#endif
         disable();
+#ifdef Q_OS_MAC
+        mPrevious->activate();
+#endif
         break;
     case Match::None:
         break;
@@ -284,12 +290,7 @@ void Chooser::invoke(const QModelIndex &index)
 void Chooser::disable()
 {
     ::animate(this, false);
-
     mSearchInput->clear();
-
-#ifdef Q_OS_MAC
-    PreviousProcess::activate();
-#endif
 }
 
 void Chooser::hideResultList()
@@ -314,9 +315,6 @@ void Chooser::showResultList()
 bool Chooser::event(QEvent *e)
 {
     if (e->type() == QEvent::WindowDeactivate) {
-#ifdef Q_OS_MAC
-        PreviousProcess::clear();
-#endif
         disable();
     }
     return QWidget::event(e);
@@ -344,11 +342,11 @@ void Chooser::onCommandReceived(const QString &command)
 void Chooser::keepAlive()
 {
     // Keep the process in active memory
-    if (!isVisible()) {
-        QList<Match> matches = mSearchModel->matches(QLatin1String("a"));
-        foreach(const Match& m, matches) {
-            Q_UNUSED(m)
-        }
-    }
+    if (windowOpacity() > 0.)
+        return;
 
+    QList<Match> matches = mSearchModel->matches(QLatin1String("a"));
+    foreach(const Match& m, matches) {
+        Q_UNUSED(m)
+    }
 }

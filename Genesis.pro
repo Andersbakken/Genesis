@@ -41,6 +41,7 @@ mac {
     LIBS += -framework Carbon -framework Foundation
 
     HEADERS += ActivateWindow.h
+    SOURCES += ActivateWindow.cpp
     OBJECTIVE_SOURCES += ActivateWindow_mac.mm
 }
 
