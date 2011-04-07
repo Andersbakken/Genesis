@@ -18,12 +18,22 @@ static inline bool userEntryLessThan(const Model::UserEntry &left, const Model::
     return left.input < right.input;
 }
 
-static QStringList defaultUrlHandlers()
+static QVariantList defaultUrlHandlers()
 {
-    QStringList ret;
-    ret << "%s|http://www.google.com/search?ie=UTF-8&q=%s|:/google.png"
-        << "%s|http://en.wikipedia.org/wiki/Special:Search?search=%s&go=Go|:/wikipedia.png"
-        << "%s|http://www.amazon.com/s?url=search-alias=aps&field-keywords=%s|:/amazon.png";
+    QVariantList ret;
+
+    QVariantMap map;
+    map["url"] = "http://www.google.com/search?ie=UTF-8&q=%s";
+    map["icon"] = QIcon(":/google.png");
+    ret.append(map);
+
+    map["url"] = "http://en.wikipedia.org/wiki/Special:Search?search=%s&go=Go";
+    map["icon"] = QIcon(":/wikipedia.png");
+    ret.append(map);
+
+    map["url"] = "http://www.amazon.com/s?url=search-alias=aps&field-keywords=%s";
+    map["icon"] = QIcon(":/amazon.png");
+    ret.append(map);
     return ret;
 }
 
@@ -51,28 +61,35 @@ Model::Model(const QByteArray &roots, QObject *parent)
 {
     Config config;
     restoreUserEntries(&config);
-    bool ok;
-    QStringList list = config.value<QStringList>("urlHandlers", defaultUrlHandlers(), &ok);
-    if (ok && config.isEnabled("defaultUrlHandlers", true))
-        list += defaultUrlHandlers();
-    foreach(const QString &string, list) {
-        const QStringList list = string.split('|');
-        if (list.size() != 3 || list.at(1).isEmpty()) {
-            qWarning("Invalid url handler %s", qPrintable(string));
-            continue;
+    {
+        QVariantList list = config.value<QVariantList>("urlHandlers");
+        if (config.isEnabled("defaultUrlHandlers", true))
+            list += defaultUrlHandlers();
+        foreach(const QVariant &map, list) {
+            if (map.type() != QVariant::Map) {
+                qWarning("Invalid url handler %s", qPrintable(map.toString()));
+                continue;
+            }
+            const QVariantMap m = map.toMap();
+            if (!m.contains("name") || !m.contains("url")) {
+                qWarning("Invalid url handler %s", qPrintable(map.toString()));
+                continue;
+            }
+            mUrlHandlers.append(m);
         }
-        mUrlHandlers.append(list);
     }
-    list = config.value<QStringList>("appHandlers");
-    if (config.isEnabled("defaultAppHandlers", true))
-        list += defaultAppHandlers();
-    foreach(const QString &string, list) {
-        const QStringList list = string.split('|');
-        if (list.size() < 2) {
-            qWarning("Invalid app handler %s", qPrintable(string));
-            continue;
+    {
+        QStringList list = config.value<QStringList>("appHandlers");
+        if (config.isEnabled("defaultAppHandlers", true))
+            list += defaultAppHandlers();
+        foreach(const QString &string, list) {
+            const QStringList list = string.split('|');
+            if (list.size() < 2) {
+                qWarning("Invalid app handler %s", qPrintable(string));
+                continue;
+            }
+            mAppHandlers.append(list);
         }
-        mAppHandlers.append(list);
     }
 
     reload();
@@ -172,11 +189,11 @@ QList<Match> Model::matches(const QString &text) const
 
         // ### could store the matches and modify them here
         for (int i=0; i<urlHandlerCount; ++i) {
-            const QStringList &handler = mUrlHandlers.at(i);
-            QString url = handler.at(1);
+            const QVariantMap &handler = mUrlHandlers.at(i);
+            QString url = handler.value("url").toString();
             url.replace("%s", QUrl::toPercentEncoding(text));
 
-            QString name = handler.at(0);
+            QString name = handler.value("name").toString();
             if (name.isEmpty()) {
                 name = text;
             } else {
@@ -184,7 +201,14 @@ QList<Match> Model::matches(const QString &text) const
             }
 
             // ### clever default icon?
-            matches.append(Match(Match::Url, name, url, QIcon(handler.at(2))));
+            QVariant icon = handler.value("icon");
+            QIcon i;
+            if (icon.type() == QVariant::Icon) {
+                i = qVariantValue<QIcon>(icon);
+            } else {
+                i = QIcon(icon.toString());
+            }
+            matches.append(Match(Match::Url, name, url, i));
         }
         if (text.startsWith("http://")) {
             matches.append(Match(Match::Url, "Open " + text, text, QIcon()));

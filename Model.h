@@ -75,7 +75,7 @@ private:
     QFileIconProvider mFileIconProvider;
     QFileSystemWatcher *mFileSystemWatcher;
     QList<UserEntry> mUserEntries;
-    QList<QStringList> mUrlHandlers;
+    QList<QVariantMap> mUrlHandlers;
     QList<QStringList> mAppHandlers;
 };
 
