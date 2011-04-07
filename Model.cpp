@@ -63,8 +63,8 @@ Model::Model(const QByteArray &roots, QObject *parent)
         }
         mUrlHandlers.append(list);
     }
-    list = config.value<QStringList>("appHandlers", defaultAppHandlers(), &ok);
-    if (ok && config.isEnabled("defaultAppHandlers", true))
+    list = config.value<QStringList>("appHandlers");
+    if (config.isEnabled("defaultAppHandlers", true))
         list += defaultAppHandlers();
     foreach(const QString &string, list) {
         const QStringList list = string.split('|');
