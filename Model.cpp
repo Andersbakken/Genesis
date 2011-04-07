@@ -104,25 +104,58 @@ QList<Match> Model::matches(const QString &text) const
         const int userEntriesSize = userEntries.size();
         const int maxMatches = MAX_MATCH_COUNT - urlHandlerCount;
 
-        int count = 0;
+        QHash<Match, int> matchcount;
         ItemIndex findIndex;
-        findIndex.key = match;
-        QList<ItemIndex>::const_iterator found = qLowerBound(mItemIndex.begin(), mItemIndex.end(), findIndex, indexLessThan);
-        const QList<ItemIndex>::const_iterator indexEnd = mItemIndex.end();
-        while (found != indexEnd && (*found).matches(match)) {
-            foreach(const Item* item, (*found).items) {
-                const Match m(Match::Application, item->name, item->filePath, item->iconPath.isEmpty()
-                              ? mFileIconProvider.icon(QFileInfo(item->filePath))
-                              : QIcon(item->iconPath), item->arguments);
-                if ((userEntriesPos = userEntries.find(item->filePath)) == userEntriesEnd) {
-                    matches.append(m);
-                } else {
-                    usermatches.insert(userEntriesSize - userEntriesPos.value(), m);
-                }
-            }
 
-            ++found;
-            ++count;
+        QStringList tofind = match.split(QLatin1Char(' '), QString::SkipEmptyParts);
+
+        // ### should be a better way at looking up multiple indices and only keeping the intersection than this
+
+        // loop for each index
+        foreach(const QString& strfind, tofind) {
+            findIndex.key = strfind;
+
+            // find the index and keep going until the next item in the list does not match the index string
+            QList<ItemIndex>::const_iterator found = qLowerBound(mItemIndex.begin(), mItemIndex.end(), findIndex, indexLessThan);
+            const QList<ItemIndex>::const_iterator indexEnd = mItemIndex.end();
+            while (found != indexEnd && (*found).matches(strfind)) {
+                foreach(const Item* item, (*found).items) {
+                    const Match m(Match::Application, item->name, item->filePath, item->iconPath.isEmpty()
+                                  ? mFileIconProvider.icon(QFileInfo(item->filePath))
+                                  : QIcon(item->iconPath), item->arguments);
+                    if (matchcount.contains(m))
+                        matchcount[m] += 1;
+                    else {
+                        if ((userEntriesPos = userEntries.find(item->filePath)) == userEntriesEnd) {
+                            matches.append(m);
+                        } else {
+                            usermatches.insert(userEntriesSize - userEntriesPos.value(), m);
+                        }
+                        matchcount[m] = 1;
+                    }
+                }
+
+                ++found;
+            }
+        }
+
+        // now remove all items that were not found the same amount of times as we have indices in the tofind list
+        const int tofindsize = tofind.size();
+        if (tofindsize > 1) {
+            QList<Match>::iterator mit = matches.begin();
+            while (mit != matches.end()) {
+                if (matchcount.value(*mit) != tofindsize)
+                    mit = matches.erase(mit);
+                else
+                    ++mit;
+            }
+            QMap<int, Match>::iterator umit = usermatches.begin();
+            while (umit != usermatches.end()) {
+                if (matchcount.value(umit.value()) != tofindsize)
+                    umit = usermatches.erase(umit);
+                else
+                    ++umit;
+            }
         }
 
         if (matches.size() > 1) {

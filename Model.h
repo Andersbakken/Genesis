@@ -16,6 +16,9 @@ struct Match
         : type(t), name(fn), filePath(t == Application ? fp : QString()), url(t == Url ? fp : QString()), icon(i), arguments(a)
     {}
 
+    bool operator==(const Match& other) const
+    { return filePath == other.filePath; }
+
     QString name, filePath, url;
     QKeySequence keySequence;
     QIcon icon;
@@ -76,5 +79,6 @@ private:
     QList<QStringList> mAppHandlers;
 };
 
+inline uint qHash(const Match& match) { return qHash(match.filePath); }
 
 #endif
