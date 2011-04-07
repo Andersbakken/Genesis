@@ -165,8 +165,12 @@ void Chooser::shortcutActivated(int shortcut)
     PreviousProcess::record();
 #endif
 
-    show();
-    raise();
+    if (isVisible()) {
+        hide();
+    } else {
+        show();
+        raise();
+    }
 }
 
 void Chooser::startSearch(const QString& input)
