@@ -167,10 +167,10 @@ void Chooser::shortcutActivated(int shortcut)
     PreviousProcess::record();
 #endif
 
-    if (isVisible())
-        fadeOut();
-    else
+    if (windowOpacity() < 1.)
         enable();
+    else
+        fadeOut();
 }
 
 void Chooser::startSearch(const QString& input)
@@ -191,6 +191,8 @@ void Chooser::showEvent(QShowEvent *e)
     QRect r(QPoint(), size());
     r.moveCenter(qApp->desktop()->screenGeometry(this).center());
     r.moveBottom(0);
+
+    setWindowOpacity(0.);
 
     move(r.topLeft());
 
