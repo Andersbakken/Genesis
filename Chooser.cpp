@@ -170,7 +170,7 @@ void Chooser::shortcutActivated(int shortcut)
     if (windowOpacity() < 1.)
         enable();
     else
-        fadeOut();
+        disable();
 }
 
 void Chooser::startSearch(const QString& input)
@@ -223,7 +223,7 @@ void Chooser::keyPressEvent(QKeyEvent *e)
     switch (e->key()) {
     case Qt::Key_Escape:
         if (mSearchInput->text().isEmpty()) {
-            fadeOut();
+            disable();
         } else {
             mSearchInput->clear(); // ### undoable?
         }
@@ -267,21 +267,21 @@ void Chooser::invoke(const QModelIndex &index)
 #ifdef Q_OS_MAC
         PreviousProcess::clear();
 #endif
-        fadeOut();
+        disable();
         break; }
     case Match::Url:
         QDesktopServices::openUrl(index.data(ResultModel::UrlRole).toString());
 #ifdef Q_OS_MAC
         PreviousProcess::clear();
 #endif
-        fadeOut();
+        disable();
         break;
     case Match::None:
         break;
     }
 }
 
-void Chooser::fadeOut()
+void Chooser::disable()
 {
     ::animate(this, false);
 
@@ -317,7 +317,7 @@ bool Chooser::event(QEvent *e)
 #ifdef Q_OS_MAC
         PreviousProcess::clear();
 #endif
-        fadeOut();
+        disable();
     }
     return QWidget::event(e);
 }
