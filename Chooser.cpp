@@ -154,7 +154,7 @@ Chooser::Chooser(QWidget *parent)
     mActivateId = mShortcut->registerShortcut(keycode, modifier);
 
     connect(&mKeepAlive, SIGNAL(timeout()), this, SLOT(keepAlive()));
-    mKeepAlive.setInterval(1000 * 60 * 10); // 10 minutes
+    mKeepAlive.setInterval(1000 * 60); // one minute
     mKeepAlive.start();
 }
 
