@@ -20,7 +20,8 @@ HEADERS += Chooser.h \
            Model.h \
            ModelThread.h \
            ResultList.h \
-           ResultModel.h
+           ResultModel.h \
+           PreviousWindow.h
 
 SOURCES += Chooser.cpp \
            Config.cpp \
@@ -40,9 +41,9 @@ mac {
     QMAKE_INFO_PLIST = Info.plist
     LIBS += -framework Carbon -framework Foundation
 
-    HEADERS += PreviousWindow.h
-    SOURCES += PreviousWindow.cpp
-    OBJECTIVE_SOURCES += PreviousWindow_mac.mm
+    SOURCES += PreviousWindow_mac.cpp
+} else {
+    SOURCES += PreviousWindow_empty.cpp
 }
 
 unix:!mac {

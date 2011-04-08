@@ -5,9 +5,7 @@
 #include "ResultList.h"
 #include "ResultModel.h"
 #include "Server.h"
-#ifdef Q_OS_MAC
-#    include "PreviousWindow.h"
-#endif
+#include "PreviousWindow.h"
 
 static void animate(QWidget *target, bool enter, int heightdiff = 0)
 {
@@ -107,10 +105,8 @@ static inline QByteArray defaultSearchPaths()
 Chooser::Chooser(QWidget *parent)
     : QWidget(parent, Qt::FramelessWindowHint), mSearchInput(new LineEdit(this)),
       mSearchModel(new Model(Config().value<QByteArray>("searchPaths", ::defaultSearchPaths()), this)),
-      mResultList(new ResultList(this)), mShortcut(new GlobalShortcut(this))
-#ifdef Q_OS_MAC
-      , mPrevious(new PreviousProcess(this))
-#endif
+      mResultList(new ResultList(this)), mShortcut(new GlobalShortcut(this)),
+      mPrevious(new PreviousProcess(this))
 {
 #ifdef ENABLE_SERVER
     connect(Server::instance(), SIGNAL(commandReceived(QString)), this, SLOT(onCommandReceived(QString)));
@@ -166,13 +162,12 @@ void Chooser::shortcutActivated(int shortcut)
     if (shortcut != mActivateId)
         return;
 
-    if (windowOpacity() < 1.)
+    if (windowOpacity() < 1.) {
+        mPrevious->record();
         enable();
-    else {
+    } else {
         disable();
-#ifdef Q_OS_MAC
         mPrevious->activate();
-#endif
     }
 }
 
@@ -204,8 +199,6 @@ void Chooser::showEvent(QShowEvent *e)
 
 void Chooser::enable()
 {
-    mPrevious->compile();
-
     setWindowOpacity(0.);
     raise();
     activateWindow();
@@ -229,9 +222,7 @@ void Chooser::keyPressEvent(QKeyEvent *e)
     case Qt::Key_Escape:
         if (mSearchInput->text().isEmpty()) {
             disable();
-#ifdef Q_OS_MAC
             mPrevious->activate();
-#endif
         } else {
             mSearchInput->clear(); // ### undoable?
         }
@@ -273,16 +264,12 @@ void Chooser::invoke(const QModelIndex &index)
 #endif
         mSearchModel->recordUserEntry(mSearchInput->text(), path);
         disable();
-#ifdef Q_OS_MAC
         mPrevious->activate();
-#endif
         break; }
     case Match::Url:
         QDesktopServices::openUrl(index.data(ResultModel::UrlRole).toString());
         disable();
-#ifdef Q_OS_MAC
         mPrevious->activate();
-#endif
         break;
     case Match::None:
         break;
