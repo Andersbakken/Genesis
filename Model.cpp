@@ -71,7 +71,7 @@ Model::Model(const QByteArray &roots, QObject *parent)
                 continue;
             }
             const QVariantMap m = map.toMap();
-            if (!m.contains("name") || !m.contains("url")) {
+            if (!m.contains("url")) {
                 qWarning("Invalid url handler %s", qPrintable(map.toString()));
                 continue;
             }
