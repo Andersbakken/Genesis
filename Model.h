@@ -76,7 +76,7 @@ private:
     QFileSystemWatcher *mFileSystemWatcher;
     QList<UserEntry> mUserEntries;
     QList<QVariantMap> mUrlHandlers;
-    QList<QStringList> mAppHandlers;
+    QList<QVariantMap> mAppHandlers;
 };
 
 inline uint qHash(const Match& match) { return qHash(match.filePath); }

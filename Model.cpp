@@ -37,12 +37,19 @@ static QVariantList defaultUrlHandlers()
     return ret;
 }
 
-static QStringList defaultAppHandlers()
+static QVariantList defaultAppHandlers()
 {
-    QStringList ret;
+    QVariantList ret;
+
 #ifdef Q_OS_MAC
-    ret << "Lock|/System/Library/CoreServices/Menu Extras/User.menu/Contents/Resources/CGSession|:/lock.png|-suspend";
+    QVariantMap map;
+    map["name"] = "Lock";
+    map["command"] = "/System/Library/CoreServices/Menu Extras/User.menu/Contents/Resources/CGSession";
+    map["arguments"] = (QStringList() << "-suspend");
+    map["icon"] = ":/lock.png";
+    ret.append(map);
 #endif
+
     return ret;
 }
 
@@ -79,16 +86,20 @@ Model::Model(const QByteArray &roots, QObject *parent)
         }
     }
     {
-        QStringList list = config.value<QStringList>("appHandlers");
+        QVariantList list = config.value<QVariantList>("appHandlers");
         if (config.isEnabled("defaultAppHandlers", true))
             list += defaultAppHandlers();
-        foreach(const QString &string, list) {
-            const QStringList list = string.split('|');
-            if (list.size() < 2) {
-                qWarning("Invalid app handler %s", qPrintable(string));
+        foreach(const QVariant &map, list) {
+            if (map.type() != QVariant::Map) {
+                qWarning("Invalid app handler %s", qPrintable(map.toString()));
                 continue;
             }
-            mAppHandlers.append(list);
+            const QVariantMap m = map.toMap();
+            if (!m.contains("command") || !m.contains("name")) {
+                qWarning("Invalid app handler %s", qPrintable(map.toString()));
+                continue;
+            }
+            mAppHandlers.append(m);
         }
     }
 
@@ -243,16 +254,13 @@ void Model::rebuildIndex()
     Item item;
     const int appHandlerCount = mAppHandlers.size();
     for (int i = 0; i < appHandlerCount; ++i) {
-        const QStringList& handler = mAppHandlers.at(i);
-        const int handlerSize = handler.size();
+        const QVariant& handler = mAppHandlers.at(i);
+        const QVariantMap& map = handler.toMap();
 
-        item.name = handler.at(0);
-        item.filePath = handler.at(1);
-        item.iconPath = (handlerSize > 2) ? handler.at(2) : QString();
-        item.arguments.clear();
-        for (int i = 3; i < handlerSize; ++i) {
-            item.arguments << handler.at(i);
-        }
+        item.name = map.value("name").toString();
+        item.filePath = map.value("command").toString();
+        item.iconPath = map.value("icon").toString();
+        item.arguments = map.value("arguments").toStringList();
         mItems.append(item);
     }
 
