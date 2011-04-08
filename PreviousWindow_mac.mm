@@ -1,4 +1,4 @@
-#include "ActivateWindow.h"
+#include "PreviousWindow.h"
 #include <Foundation/NSAppleScript.h>
 #include <Foundation/NSDictionary.h>
 #include <Foundation/NSString.h>

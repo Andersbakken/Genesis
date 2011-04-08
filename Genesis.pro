@@ -40,9 +40,9 @@ mac {
     QMAKE_INFO_PLIST = Info.plist
     LIBS += -framework Carbon -framework Foundation
 
-    HEADERS += ActivateWindow.h
-    SOURCES += ActivateWindow.cpp
-    OBJECTIVE_SOURCES += ActivateWindow_mac.mm
+    HEADERS += PreviousWindow.h
+    SOURCES += PreviousWindow.cpp
+    OBJECTIVE_SOURCES += PreviousWindow_mac.mm
 }
 
 unix:!mac {
@@ -54,5 +54,3 @@ enable_server {
     HEADERS += Server.h
     SOURCES += Server.cpp
 }
-
-

@@ -1,4 +1,4 @@
-#include "ActivateWindow.h"
+#include "PreviousWindow.h"
 #include <QMetaType>
 
 ScriptCompiler::ScriptCompiler(QObject *parent)

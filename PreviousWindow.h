@@ -1,5 +1,5 @@
-#ifndef ACTIVATE_WINDOW_H
-#define ACTIVATE_WINDOW_H
+#ifndef PREVIOUSWINDOW_H
+#define PREVIOUSWINDOW_H
 
 #include <QObject>
 #include <QThread>

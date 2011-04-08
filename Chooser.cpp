@@ -6,7 +6,7 @@
 #include "ResultModel.h"
 #include "Server.h"
 #ifdef Q_OS_MAC
-#    include "ActivateWindow.h"
+#    include "PreviousWindow.h"
 #endif
 
 static void animate(QWidget *target, bool enter, int heightdiff = 0)
@@ -107,8 +107,10 @@ static inline QByteArray defaultSearchPaths()
 Chooser::Chooser(QWidget *parent)
     : QWidget(parent, Qt::FramelessWindowHint), mSearchInput(new LineEdit(this)),
       mSearchModel(new Model(Config().value<QByteArray>("searchPaths", ::defaultSearchPaths()), this)),
-      mResultList(new ResultList(this)), mShortcut(new GlobalShortcut(this)),
-      mPrevious(new PreviousProcess(this))
+      mResultList(new ResultList(this)), mShortcut(new GlobalShortcut(this))
+#ifdef Q_OS_MAC
+      , mPrevious(new PreviousProcess(this))
+#endif
 {
 #ifdef ENABLE_SERVER
     connect(Server::instance(), SIGNAL(commandReceived(QString)), this, SLOT(onCommandReceived(QString)));
