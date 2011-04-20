@@ -95,11 +95,13 @@ void RoundedWidget::paintEvent(QPaintEvent* e)
 
 static inline QByteArray defaultSearchPaths()
 {
+    QByteArray paths = qgetenv("PATH");
 #ifdef Q_OS_MAC
-    return "/Applications";
-#else
-    return qgetenv("PATH");
+    if (!paths.isEmpty())
+        paths += ":";
+    paths += "/Applications";
 #endif
+    return paths;
 }
 
 Chooser::Chooser(QWidget *parent)
