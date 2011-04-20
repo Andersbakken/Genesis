@@ -76,14 +76,16 @@ void ModelThread::recurse(const QByteArray &path, int maxDepth)
     while ((d = readdir(dir))) {
         Q_ASSERT(int(strlen(d->d_name)) < 1024 - path.size());
 #ifdef Q_OS_MAC
-        if (d->d_type == DT_DIR) {
+        if (d->d_type == DT_DIR || d->d_type == DT_LNK) {
             if (d->d_namlen > 4 && !strcmp(d->d_name + d->d_namlen - 4, ".app")) {
                 mWatchPaths.insert(path);
                 strcpy(file, d->d_name);
                 const Model::Item item = { QString::fromUtf8(fileBuffer), findIconPath(fileBuffer),
                                            name(QString::fromUtf8(fileBuffer)), QStringList() };
                 mLocalItems.append(item);
-            } else if (maxDepth > 1 && (d->d_namlen > 2 || (strcmp(".", d->d_name) && strcmp("..", d->d_name)))) {
+            }
+        } else if (d->d_type == DT_DIR) {
+            if (maxDepth > 1 && (d->d_namlen > 2 || (strcmp(".", d->d_name) && strcmp("..", d->d_name)))) {
                 recurse(path + '/' + reinterpret_cast<const char *>(d->d_name), maxDepth - 1);
             }
         }
