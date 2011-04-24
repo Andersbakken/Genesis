@@ -84,7 +84,8 @@ void ModelThread::recurse(const QByteArray &path, int maxDepth)
                                            name(QString::fromUtf8(fileBuffer)), QStringList() };
                 mLocalItems.append(item);
             }
-        } else if (d->d_type == DT_DIR) {
+        }
+        if (d->d_type == DT_DIR) {
             if (maxDepth > 1 && (d->d_namlen > 2 || (strcmp(".", d->d_name) && strcmp("..", d->d_name)))) {
                 recurse(path + '/' + reinterpret_cast<const char *>(d->d_name), maxDepth - 1);
             }
