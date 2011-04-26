@@ -46,6 +46,8 @@ void ResultList::up()
     const int current = currentIndex().row();
     if (current > 0) {
         setCurrentIndex(mModel->index(current - 1, 0));
+    } else {
+        emit unhandledUp();
     }
 }
 

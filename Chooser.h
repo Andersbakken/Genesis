@@ -29,7 +29,7 @@ private slots:
 
     void enable();
     void disable();
-
+    void onUnhandledUp();
 private:
     void showResultList();
     void hideResultList();

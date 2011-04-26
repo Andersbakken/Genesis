@@ -21,6 +21,8 @@ public slots:
     void up();
     void down();
     void enter();
+signals:
+    void unhandledUp();
 private:
     ResultModel* mModel;
 };

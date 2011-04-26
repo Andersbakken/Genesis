@@ -157,6 +157,7 @@ Chooser::Chooser(QWidget *parent)
     connect(&mKeepAlive, SIGNAL(timeout()), this, SLOT(keepAlive()));
     mKeepAlive.setInterval(1000 * 60 * 5); // five minutes
     mKeepAlive.start();
+    connect(mResultList, SIGNAL(unhandledUp()), this, SLOT(onUnhandledUp()));
 }
 
 void Chooser::shortcutActivated(int shortcut)
@@ -249,6 +250,10 @@ void Chooser::keyPressEvent(QKeyEvent *e)
 void Chooser::invoke(const QModelIndex &index)
 {
     const Match::Type type = static_cast<Match::Type>(index.data(ResultModel::TypeRole).toInt());
+    Config config;
+    QStringList history = config.value<QStringList>("history");
+    history.prepend(mSearchInput->text());
+    config.setValue("history", history);
     switch (type) {
     case Match::Application: {
         const QString path = index.data(ResultModel::FilePathRole).toString();
@@ -340,4 +345,11 @@ void Chooser::keepAlive()
     foreach(const Match& m, matches) {
         Q_UNUSED(m)
     }
+}
+
+void Chooser::onUnhandledUp()
+{
+    const QStringList history = Config().value<QStringList>("history");
+    if (!history.empty())
+        mSearchInput->setText(history.first());
 }
