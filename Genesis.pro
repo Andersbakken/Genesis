@@ -21,7 +21,8 @@ HEADERS += Chooser.h \
            ModelThread.h \
            ResultList.h \
            ResultModel.h \
-           PreviousWindow.h
+           PreviousWindow.h \
+    Invoker.h
 
 SOURCES += Chooser.cpp \
            Config.cpp \
@@ -33,7 +34,8 @@ SOURCES += Chooser.cpp \
            ResultList.cpp \
            ResultModel.cpp \
            main.cpp \
-           3rdParty/cJSON/cJSON.c
+           3rdParty/cJSON/cJSON.c \
+    Invoker.cpp
 
 RESOURCES = Genesis.qrc
 
@@ -42,6 +44,8 @@ mac {
     LIBS += -framework Carbon -framework Foundation
 
     SOURCES += PreviousWindow_mac.cpp
+} unix {
+    SOURCES += PreviousWindow_x11.cpp
 } else {
     SOURCES += PreviousWindow_empty.cpp
 }
@@ -55,3 +59,5 @@ enable_server {
     HEADERS += Server.h
     SOURCES += Server.cpp
 }
+
+

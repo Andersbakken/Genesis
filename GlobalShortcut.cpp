@@ -1,17 +1,29 @@
 #include "GlobalShortcut.h"
 #include <QWidget>
 #include <QHash>
+#include <QSet>
 #include <QDebug>
-
-#ifdef Q_OS_MAC
-#include <Carbon/Carbon.h>
+#if defined(Q_WS_X11)
+#    include <QApplication>
+#    include <QTime>
+#    include <QAbstractEventDispatcher>
+#    include <QX11Info>
+#    include <X11/Xlib.h>
+#    define EMIT_TRESHOLD 100
+#elif defined(Q_OS_MAC)
+#    include <Carbon/Carbon.h>
+#endif
 
 struct Shortcut
 {
     GlobalShortcut* creator;
+#if defined(Q_WS_X11)
+    unsigned int keycode, modifier;
+    QTime lastemitted;
+#elif defined(Q_OS_MAC)
     EventHotKeyRef* keyref;
-};
 #endif
+};
 
 class GlobalShortcutPrivate
 {
@@ -22,17 +34,23 @@ public:
     }
     ~GlobalShortcutPrivate()
     {
-#ifdef Q_OS_MAC
+#if defined(Q_WS_X11)
+        Display* dpy = QX11Info::display();
+#endif
+
         QHash<int, Shortcut>::iterator it = shortcuts.begin();
         while (it != shortcuts.end()) {
             if (it.value().creator == shortcut) {
+#if defined(Q_OS_MAC)
                 UnregisterEventHotKey(*(it.value().keyref));
                 delete it.value().keyref;
+#elif defined(Q_WS_X11)
+                XUngrabKey(dpy, it.value().keycode, it.value().modifier, root);
+#endif
                 it = shortcuts.erase(it);
             } else
                 ++it;
         }
-#endif
     }
 
     void notify(int code)
@@ -41,16 +59,42 @@ public:
     }
 
     GlobalShortcut* shortcut;
-#ifdef Q_OS_MAC
     static QHash<int, Shortcut> shortcuts;
+#ifdef Q_WS_X11
+    static bool dispatcherEventHandler(void* message);
+    static Window root;
 #endif
 };
 
-#ifdef Q_OS_MAC
 QHash<int, Shortcut> GlobalShortcutPrivate::shortcuts;
-#endif
 
-#ifdef Q_OS_MAC
+#if defined(Q_WS_X11)
+Window GlobalShortcutPrivate::root;
+
+bool GlobalShortcutPrivate::dispatcherEventHandler(void* message)
+{
+    XEvent* ev = static_cast<XEvent*>(message);
+    if ((ev->type == KeyRelease || ev->type == KeyPress)
+        && ev->xkey.window == root) {
+        QHash<int, Shortcut>::iterator it = shortcuts.begin();
+        QHash<int, Shortcut>::iterator itend = shortcuts.end();
+        while (it != itend) {
+            if (it.value().keycode == ev->xkey.keycode
+                && (ev->xkey.state & it.value().modifier)) {
+                if (it.value().lastemitted.elapsed() >= EMIT_TRESHOLD) {
+                    if (ev->type == KeyPress) {
+                        it.value().lastemitted.start();
+                        emit it.value().creator->activated(it.key());
+                    }
+                    return true;
+                }
+            }
+            ++it;
+        }
+    }
+    return false;
+}
+#elif defined(Q_OS_MAC)
 static OSStatus hotKeyHandler(EventHandlerCallRef nextHandler, EventRef event, void *userData)
 {
     Q_UNUSED(nextHandler)
@@ -73,13 +117,17 @@ GlobalShortcut::GlobalShortcut(QObject* parent)
     if (first) {
         first = false;
 
-#ifdef Q_OS_MAC
+#if defined(Q_OS_MAC)
         EventTypeSpec spec;
 
         spec.eventClass = kEventClassKeyboard;
         spec.eventKind = kEventHotKeyPressed;
 
         InstallApplicationEventHandler(&hotKeyHandler, 1, &spec, priv, NULL);
+#elif defined(Q_WS_X11)
+        int screen = qApp->topLevelWidgets().front()->x11Info().screen();
+        GlobalShortcutPrivate::root = RootWindow(QX11Info::display(), screen);
+        QAbstractEventDispatcher::instance()->setEventFilter(GlobalShortcutPrivate::dispatcherEventHandler);
 #endif
     }
 }
@@ -93,7 +141,9 @@ int GlobalShortcut::registerShortcut(int keycode, int modifier)
 {
     static int id = 1;
 
-#ifdef Q_OS_MAC
+    Shortcut shortcut;
+    shortcut.creator = this;
+#if defined(Q_OS_MAC)
     while (GlobalShortcutPrivate::shortcuts.contains(id))
         ++id;
 
@@ -103,26 +153,31 @@ int GlobalShortcut::registerShortcut(int keycode, int modifier)
     keyid.id = id;
     RegisterEventHotKey(keycode, modifier, keyid, GetEventDispatcherTarget(), 0, ref);
 
-    Shortcut shortcut;
-    shortcut.creator = this;
     shortcut.keyref = ref;
-    GlobalShortcutPrivate::shortcuts[id] = shortcut;
+#elif defined(Q_WS_X11)
+    shortcut.keycode = keycode;
+    shortcut.modifier = modifier;
+    shortcut.lastemitted.start();
+
+    Display* dpy = QX11Info::display();
+    XGrabKey(dpy, keycode, modifier, GlobalShortcutPrivate::root, False, GrabModeAsync, GrabModeAsync);
 #endif
+    GlobalShortcutPrivate::shortcuts[id] = shortcut;
 
     return id++;
 }
 
 void GlobalShortcut::unregisterShortcut(int id)
 {
-#ifdef Q_OS_MAC
     QHash<int, Shortcut>::iterator it = GlobalShortcutPrivate::shortcuts.find(id);
     if (it != GlobalShortcutPrivate::shortcuts.end()) {
         if (it.value().creator != this)
             return;
 
+#ifdef Q_OS_MAC
         UnregisterEventHotKey(*(it.value().keyref));
         delete it.value().keyref;
+#endif
         GlobalShortcutPrivate::shortcuts.erase(it);
     }
-#endif
 }

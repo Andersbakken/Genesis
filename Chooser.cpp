@@ -6,6 +6,7 @@
 #include "ResultModel.h"
 #include "Server.h"
 #include "PreviousWindow.h"
+#include "Invoker.h"
 
 static void animate(QWidget *target, bool enter, int heightdiff = 0)
 {
@@ -16,6 +17,7 @@ static void animate(QWidget *target, bool enter, int heightdiff = 0)
                                                                   false
 #endif
         );
+
     static const bool enablePositionAnimation = Config().isEnabled("positionAnimation", false);
     QRect r = target->rect();
     r.moveCenter(qApp->desktop()->screenGeometry(target).center());
@@ -108,7 +110,7 @@ Chooser::Chooser(QWidget *parent)
     : QWidget(parent, Qt::FramelessWindowHint), mSearchInput(new LineEdit(this)),
       mSearchModel(new Model(Config().value<QByteArray>("searchPaths", ::defaultSearchPaths()), this)),
       mResultList(new ResultList(this)), mShortcut(new GlobalShortcut(this)),
-      mPrevious(new PreviousProcess(this))
+      mPrevious(new PreviousProcess(this)), mInvoker(new Invoker(this))
 {
 #ifdef ENABLE_SERVER
     connect(Server::instance(), SIGNAL(commandReceived(QString)), this, SLOT(onCommandReceived(QString)));
@@ -149,8 +151,13 @@ Chooser::Chooser(QWidget *parent)
 
     resize(mWidth, mResultHiddenHeight);
 
+#if defined(Q_OS_MAC)
     const int keycode = config.value<int>(QLatin1String("shortcutKeycode"), 49); // 49 = space
     const int modifier = config.value<int>(QLatin1String("shortcutModifier"), 256); // 256 = cmd
+#elif defined(Q_WS_X11)
+    const int keycode = config.value<int>(QLatin1String("shortcutKeycode"), 65); // 65 = space
+    const int modifier = config.value<int>(QLatin1String("shortcutModifier"), 1); // 1 = shift
+#endif
     connect(mShortcut, SIGNAL(activated(int)), this, SLOT(shortcutActivated(int)));
     mActivateId = mShortcut->registerShortcut(keycode, modifier);
 
@@ -203,7 +210,11 @@ void Chooser::showEvent(QShowEvent *e)
 void Chooser::enable()
 {
     setWindowOpacity(0.);
+#if defined(Q_OS_MAC)
     raise();
+#elif defined(Q_WS_X11)
+    mInvoker->raise(qApp->topLevelWidgets().front());
+#endif
     activateWindow();
 
     const int animateHeight = mResultList->isHidden() ? (mResultShownHeight - mResultHiddenHeight) / 2 : 0;
@@ -257,18 +268,11 @@ void Chooser::invoke(const QModelIndex &index)
     switch (type) {
     case Match::Application: {
         const QString path = index.data(ResultModel::FilePathRole).toString();
-        QStringList args = index.data(ResultModel::ArgumentsRole).toStringList();
-#ifdef Q_OS_MAC
-        if (path.endsWith(QLatin1String(".app"))) {
-            if (!args.isEmpty())
-                args.prepend(QLatin1String("--args"));
-            args.prepend(path);
-            QProcess::startDetached(QLatin1String("open"), args);
-        } else
-            QProcess::startDetached(path, args);
-#else
-        QProcess::startDetached(path, args);
-#endif
+        const QStringList args = index.data(ResultModel::ArgumentsRole).toStringList();
+
+        mInvoker->setApplication(path, args);
+        mInvoker->invoke();
+
         mSearchModel->recordUserEntry(mSearchInput->text(), path);
         disable();
         mPrevious->activate();

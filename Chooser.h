@@ -8,6 +8,7 @@ class Model;
 class ResultList;
 class QVBoxLayout;
 class PreviousProcess;
+class Invoker;
 
 class Chooser : public QWidget
 {
@@ -42,6 +43,7 @@ private:
     int mActivateId;
     QTimer mKeepAlive;
     PreviousProcess* mPrevious;
+    Invoker* mInvoker;
 
     int mWidth;
     int mResultHiddenHeight;
