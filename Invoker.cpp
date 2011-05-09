@@ -228,7 +228,6 @@ void Invoker::hideFromPager(QWidget *w)
     QSet<Atom> states;
 
     long offset = 0;
-    bool ok = false;
     do {
         int r = XGetWindowProperty(dpy, win, stateatom, offset, 5, False,
                                    atomatom, &retatom, &retfmt, &retnitems, &retbytes, &retprop);
@@ -243,7 +242,7 @@ void Invoker::hideFromPager(QWidget *w)
 
         XFree(retprop);
         offset += retnitems;
-    } while (retbytes > 0 && !ok);
+    } while (retbytes > 0);
 
     // if the state contains our atoms, just return
     if (states.contains(hidepageratom) && states.contains(hidetaskbaratom))
