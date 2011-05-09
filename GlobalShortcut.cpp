@@ -2,7 +2,6 @@
 #include <QWidget>
 #include <QHash>
 #include <QSet>
-#include <QDebug>
 #if defined(Q_WS_X11)
 #    include <QApplication>
 #    include <QTime>

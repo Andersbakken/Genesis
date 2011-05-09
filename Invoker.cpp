@@ -170,53 +170,21 @@ static void findLastNormal(Display* dpy, Atom typeatom, Atom normalatom, Atom at
 // raises the window 'w'
 static void raiseWindow(Display* dpy, int screen, Window w)
 {
-    // find the top-most normal window
-    Atom windowatom, clientatom, typeatom, normalatom, restackatom, atomatom, retatom;
-    int retfmt;
-    unsigned long retnitems, retbytes;
-    unsigned char* retprop;
-
-    clientatom = XInternAtom(dpy, "_NET_CLIENT_LIST_STACKING", True);
-    windowatom = XInternAtom(dpy, "WINDOW", True);
-    typeatom = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE", True);
-    normalatom = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE_NORMAL", True);
-    restackatom = XInternAtom(dpy, "_NET_RESTACK_WINDOW", True);
-    atomatom = XInternAtom(dpy, "ATOM", True);
-    if (clientatom == None || windowatom == None || typeatom == None
-        || normalatom == None || restackatom == None || atomatom == None)
+    const Atom activeatom = XInternAtom(dpy, "_NET_ACTIVE_WINDOW", True);
+    if (activeatom == None)
         return;
 
-    Window lastnormal = None;
-    long offset = 0;
-    do {
-        int r = XGetWindowProperty(dpy, RootWindow(dpy, screen), clientatom, offset, 5, False,
-                                   windowatom, &retatom, &retfmt, &retnitems, &retbytes, &retprop);
-        if (r != Success || retatom == None)
-            return;
-
-        Q_ASSERT(retatom == windowatom && retfmt == 32);
-
-        Window* windows = reinterpret_cast<Window*>(retprop);
-        findLastNormal(dpy, typeatom, normalatom, atomatom, windows, retnitems, &lastnormal);
-
-        XFree(retprop);
-        offset += retnitems;
-    } while (retbytes > 0);
-
-    //qDebug() << "last normal window" << QByteArray::number((int)lastnormal, 16);
-
-    // Send a restack event to the root window (will be intercepted by the window manager)
     XEvent ev;
     ev.xclient.type = ClientMessage;
     ev.xclient.display = dpy;
     ev.xclient.serial = 0;
     ev.xclient.send_event = True;
     ev.xclient.window = w;
-    ev.xclient.message_type = restackatom;
+    ev.xclient.message_type = activeatom;
     ev.xclient.format = 32;
-    ev.xclient.data.l[0] = 2;
-    ev.xclient.data.l[1] = lastnormal;
-    ev.xclient.data.l[2] = Above;
+    ev.xclient.data.l[0] = 0;
+    ev.xclient.data.l[1] = 0;
+    ev.xclient.data.l[2] = 0;
     ev.xclient.data.l[3] = 0;
     ev.xclient.data.l[4] = 0;
 
@@ -230,7 +198,6 @@ static bool raise(const QString &app, const QWidget* widget)
     const int scrn = widget->x11Info().screen();
     Window w = None;
     if (findWindow(dpy, scrn, app, &w)) {
-        //qDebug() << "raising" << QByteArray::number((int)w, 16);
         raiseWindow(dpy, scrn, w);
         return true;
     }
@@ -263,6 +230,5 @@ void Invoker::raise(QWidget *w)
     Display* dpy = QX11Info::display();
     const int screen = w->x11Info().screen();
     raiseWindow(dpy, screen, w->handle());
-    XSetInputFocus(dpy, w->handle(), RevertToNone, CurrentTime);
 #endif
 }

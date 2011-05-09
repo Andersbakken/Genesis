@@ -212,10 +212,10 @@ void Chooser::enable()
     setWindowOpacity(0.);
 #if defined(Q_OS_MAC)
     raise();
+    activateWindow();
 #elif defined(Q_WS_X11)
     mInvoker->raise(qApp->topLevelWidgets().front());
 #endif
-    activateWindow();
 
     const int animateHeight = mResultList->isHidden() ? (mResultShownHeight - mResultHiddenHeight) / 2 : 0;
     ::animate(this, true, animateHeight);
