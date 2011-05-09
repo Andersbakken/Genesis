@@ -95,6 +95,7 @@ static bool readProperty(Display* dpy, Window w, Atom property, QList<T>& data)
         const T* retdata = reinterpret_cast<T*>(retprop);
         for (unsigned long i = 0; i < retnitems; ++i)
             data << retdata[i];
+        XFree(retprop);
 
         switch(retfmt) {
         case 8:
