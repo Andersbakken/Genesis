@@ -86,8 +86,8 @@ bool GlobalShortcutPrivate::dispatcherEventHandler(void* message)
                         it.value().lastemitted.start();
                         emit it.value().creator->activated(it.key());
                     }
-                    return true;
                 }
+                return true;
             }
             ++it;
         }
@@ -174,9 +174,12 @@ void GlobalShortcut::unregisterShortcut(int id)
         if (it.value().creator != this)
             return;
 
-#ifdef Q_OS_MAC
+#if defined(Q_OS_MAC)
         UnregisterEventHotKey(*(it.value().keyref));
         delete it.value().keyref;
+#elif defined(Q_WS_X11)
+        Display* dpy = QX11Info::display();
+        XUngrabKey(dpy, it.value().keycode, it.value().modifier, GlobalShortcutPrivate::root);
 #endif
         GlobalShortcutPrivate::shortcuts.erase(it);
     }
