@@ -29,8 +29,8 @@ void Invoker::setApplication(const QString &application, const QStringList &argu
 // Returns 'true' if the process with the pid 'pid' has the application name 'app'
 static bool pidIsApp(long pid, const QString &app)
 {
-    QByteArray file = "/proc/" + QByteArray::number(static_cast<qlonglong>(pid)) + "/cmdline";
-    int fd = ::open(file.constData(), O_RDONLY);
+    const QByteArray file = "/proc/" + QByteArray::number(static_cast<qlonglong>(pid)) + "/cmdline";
+    const int fd = ::open(file.constData(), O_RDONLY);
     if (fd == -1)
         return false;
     const int maxsize = 1024;
@@ -49,22 +49,22 @@ static bool pidIsApp(long pid, const QString &app)
     if (!pos)
         return false;
 
-    char* start = &data[0];
-    char* end = start + pos;
+    const char* start = &data[0];
+    const char* end = start + pos;
     while (start != end && *start != ' ')
         ++start;
     data[start - &data[0]] = '\0';
     //qDebug() << "hasPid" << data << "vs input," << app << "from file" << file << num;
 
     QByteArray app8bit = app.toLocal8Bit();
-    int slash = app8bit.lastIndexOf('/');
+    const int slash = app8bit.lastIndexOf('/');
     if (slash != -1)
         app8bit = app8bit.mid(slash + 1);
     QByteArray badata(data);
     //qDebug() << "hello" << app8bit << badata << app;
     if (badata.size() >= MIN_EQLEN && badata.contains(app8bit))
         return true;
-    else if (app.toLocal8Bit() == app8bit)
+    else if (app.toLocal8Bit() == badata)
         return true;
     return false;
 }
@@ -205,6 +205,7 @@ static void raiseWindow(Display* dpy, int screen, Window w)
 
     //qDebug() << "last normal window" << QByteArray::number((int)lastnormal, 16);
 
+    // Send a restack event to the root window (will be intercepted by the window manager)
     XEvent ev;
     ev.xclient.type = ClientMessage;
     ev.xclient.display = dpy;
@@ -226,7 +227,7 @@ static void raiseWindow(Display* dpy, int screen, Window w)
 static bool raise(const QString &app, const QWidget* widget)
 {
     Display* dpy = QX11Info::display();
-    int scrn = widget->x11Info().screen();
+    const int scrn = widget->x11Info().screen();
     Window w = None;
     if (findWindow(dpy, scrn, app, &w)) {
         //qDebug() << "raising" << QByteArray::number((int)w, 16);
@@ -236,7 +237,7 @@ static bool raise(const QString &app, const QWidget* widget)
     return false;
 }
 #elif !defined(Q_OS_MAC)
-#error findPid not implemented on this platform
+#error Do not know how to raise windows on this platform
 #endif
 
 void Invoker::invoke()
@@ -260,7 +261,7 @@ void Invoker::raise(QWidget *w)
 {
 #ifdef Q_WS_X11
     Display* dpy = QX11Info::display();
-    int screen = w->x11Info().screen();
+    const int screen = w->x11Info().screen();
     raiseWindow(dpy, screen, w->handle());
     XSetInputFocus(dpy, w->handle(), RevertToNone, CurrentTime);
 #endif

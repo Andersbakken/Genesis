@@ -73,7 +73,7 @@ Window GlobalShortcutPrivate::root;
 
 bool GlobalShortcutPrivate::dispatcherEventHandler(void* message)
 {
-    XEvent* ev = static_cast<XEvent*>(message);
+    const XEvent* ev = static_cast<XEvent*>(message);
     if ((ev->type == KeyRelease || ev->type == KeyPress)
         && ev->xkey.window == root) {
         QHash<int, Shortcut>::iterator it = shortcuts.begin();
@@ -125,7 +125,7 @@ GlobalShortcut::GlobalShortcut(QObject* parent)
 
         InstallApplicationEventHandler(&hotKeyHandler, 1, &spec, priv, NULL);
 #elif defined(Q_WS_X11)
-        int screen = qApp->topLevelWidgets().front()->x11Info().screen();
+        const int screen = qApp->topLevelWidgets().front()->x11Info().screen();
         GlobalShortcutPrivate::root = RootWindow(QX11Info::display(), screen);
         QAbstractEventDispatcher::instance()->setEventFilter(GlobalShortcutPrivate::dispatcherEventHandler);
 #endif
