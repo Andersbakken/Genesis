@@ -10,6 +10,7 @@
 #    include <fcntl.h>
 #    include <stdlib.h>
 #    include <X11/Xlib.h>
+#    include <X11/Xutil.h>
 #endif
 
 #define MIN_EQLEN 6
@@ -73,6 +74,25 @@ static bool pidIsApp(long pid, const QString &app)
 // returns 'true' if the window 'w' belongs to the app 'app'
 static bool windowIsApp(Display* dpy, Window w, const QString &app, Atom pidatom, Atom cardinalatom)
 {
+    XClassHint hint;
+    if (XGetClassHint(dpy, w, &hint) != 0) {
+        if (hint.res_name) {
+            QByteArray app8bit = app.toLocal8Bit();
+            const int slash = app8bit.lastIndexOf('/');
+            if (slash != -1)
+                app8bit = app8bit.mid(slash + 1);
+            QByteArray res = QByteArray::fromRawData(hint.res_name, strnlen(hint.res_name, 100) + 1);
+            if (app8bit.toLower() == res.toLower()) {
+                XFree(hint.res_name);
+                return true;
+            }
+            XFree(hint.res_name);
+        }
+
+        if (hint.res_class)
+            XFree(hint.res_class);
+    }
+
     Atom retatom;
     int retfmt;
     unsigned long retnitems, retbytes;
