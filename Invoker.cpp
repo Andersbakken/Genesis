@@ -1,4 +1,5 @@
 #include "Invoker.h"
+#include "Config.h"
 #include <QProcess>
 #include <QDebug>
 #ifdef Q_OS_LINUX
@@ -135,6 +136,9 @@ static bool windowIsApp(Display* dpy, Window w, const QString &app, Atom pidatom
             XFree(hint.res_class);
     }
 
+    static const bool matchFromPid = Config().isEnabled("matchFromPid", true);
+    if (!matchFromPid)
+        return false;
 
     QList<long> pids;
     if (readProperty(dpy, w, pidatom, pids) && !pids.isEmpty()) {
