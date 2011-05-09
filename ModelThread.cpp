@@ -91,7 +91,7 @@ void ModelThread::recurse(const QByteArray &path, int maxDepth)
             }
         }
 #else
-        if (d->d_type == DT_REG) {
+        if (d->d_type == DT_REG || d->d_type == DT_LNK) {
             strcpy(file, d->d_name);
             if (!stat(fileBuffer, &s)) {
                 if (s.st_mode & S_IXOTH) {
