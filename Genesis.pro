@@ -44,7 +44,7 @@ mac {
     LIBS += -framework Carbon -framework Foundation
 
     SOURCES += PreviousWindow_mac.cpp
-} unix {
+} else:unix {
     SOURCES += PreviousWindow_x11.cpp
 } else {
     SOURCES += PreviousWindow_empty.cpp
