@@ -173,7 +173,7 @@ static void raiseWindow(Display* dpy, int screen, Window w)
     XSendEvent(dpy, RootWindow(dpy, screen), False, SubstructureRedirectMask | SubstructureNotifyMask, &ev);
 }
 
-// returns 'true' if the application named 'app' was found and also puts the window id in 'w'
+// returns 'true' if the application named 'app' was found and raised
 static bool findAndRaiseWindow(Display* dpy, int screen, const QString &app)
 {
     const Atom clientatom = XInternAtom(dpy, "_NET_CLIENT_LIST", True);
