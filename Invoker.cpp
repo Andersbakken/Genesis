@@ -231,8 +231,10 @@ void Invoker::hideFromPager(QWidget *w)
     do {
         int r = XGetWindowProperty(dpy, win, stateatom, offset, 5, False,
                                    atomatom, &retatom, &retfmt, &retnitems, &retbytes, &retprop);
-        if (r != Success || retatom == None)
+        if (r != Success)
             return;
+        if (retatom == None)
+            break;
 
         Q_ASSERT(retatom == atomatom && retfmt == 32);
 
