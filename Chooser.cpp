@@ -165,6 +165,8 @@ Chooser::Chooser(QWidget *parent)
     mKeepAlive.setInterval(1000 * 60 * 5); // five minutes
     mKeepAlive.start();
     connect(mResultList, SIGNAL(unhandledUp()), this, SLOT(onUnhandledUp()));
+
+    Invoker::hideFromPager(this);
 }
 
 void Chooser::shortcutActivated(int shortcut)
@@ -172,10 +174,11 @@ void Chooser::shortcutActivated(int shortcut)
     if (shortcut != mActivateId)
         return;
 
-    if (windowOpacity() < 1.) {
+    static const bool showHide = Config().isEnabled("showHide", false);
+    if ((showHide && !isVisible()) || windowOpacity() < 1.) {
         mPrevious->record();
         enable();
-    } else {
+    } else if ((showHide && isVisible()) || windowOpacity() > 0.) {
         disable();
         mPrevious->activate();
     }
@@ -205,17 +208,29 @@ void Chooser::showEvent(QShowEvent *e)
     move(r.topLeft());
 
     QWidget::showEvent(e);
+
+    static const bool showHide = Config().isEnabled("showHide", false);
+    if (showHide) {
+        static bool initial = true;
+        if (initial) {
+            hide();
+            initial = false;
+        }
+    }
 }
 
 void Chooser::enable()
 {
+    static const bool showHide = Config().isEnabled("showHide", false);
+    if (showHide) {
+        Invoker::hideFromPager(this);
+        show();
+        QApplication::flush();
+        QApplication::syncX();
+    }
+
     setWindowOpacity(0.);
-#if defined(Q_OS_MAC)
-    raise();
-    activateWindow();
-#elif defined(Q_WS_X11)
-    mInvoker->raise(qApp->topLevelWidgets().front());
-#endif
+    Invoker::raise(this);
 
     const int animateHeight = mResultList->isHidden() ? (mResultShownHeight - mResultHiddenHeight) / 2 : 0;
     ::animate(this, true, animateHeight);
@@ -275,12 +290,12 @@ void Chooser::invoke(const QModelIndex &index)
 
         mSearchModel->recordUserEntry(mSearchInput->text(), path);
         disable();
-        mPrevious->activate();
+        //mPrevious->activate();
         break; }
     case Match::Url:
         QDesktopServices::openUrl(index.data(ResultModel::UrlRole).toString());
         disable();
-        mPrevious->activate();
+        //mPrevious->activate();
         break;
     case Match::None:
         break;
@@ -289,6 +304,14 @@ void Chooser::invoke(const QModelIndex &index)
 
 void Chooser::disable()
 {
+    static const bool showHide = Config().isEnabled("showHide", false);
+    if (showHide) {
+        hide();
+        QApplication::flush();
+        QApplication::syncX();
+        mSearchInput->clear();
+        return;
+    }
     ::animate(this, false);
     mSearchInput->clear();
 }

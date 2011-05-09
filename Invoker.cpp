@@ -2,6 +2,7 @@
 #include <QProcess>
 #include <QDebug>
 #ifdef Q_OS_LINUX
+#    include <QSet>
 #    include <QX11Info>
 #    include <dirent.h>
 #    include <stdio.h>
@@ -195,9 +196,72 @@ void Invoker::invoke()
 
 void Invoker::raise(QWidget *w)
 {
-#ifdef Q_WS_X11
+#if defined(Q_WS_X11)
     Display* dpy = QX11Info::display();
     const int screen = w->x11Info().screen();
     raiseWindow(dpy, screen, w->handle());
+#elif defined(Q_OS_MAC)
+    w->raise();
+    w->activateWindow();
+#endif
+}
+
+void Invoker::hideFromPager(QWidget *w)
+{
+#if defined(Q_WS_X11)
+    Display* dpy = QX11Info::display();
+    Window win = w->winId();
+    //qDebug() << "hiding from pager" << QByteArray::number((int)win, 16);
+
+    // First, get a list of the existing window states
+    Atom retatom;
+    int retfmt;
+    unsigned long retnitems, retbytes;
+    unsigned char* retprop;
+    const Atom stateatom = XInternAtom(dpy, "_NET_WM_STATE", True);
+    const Atom hidetaskbaratom = XInternAtom(dpy, "_NET_WM_STATE_SKIP_TASKBAR", True);
+    const Atom hidepageratom = XInternAtom(dpy, "_NET_WM_STATE_SKIP_PAGER", True);
+    const Atom atomatom = XInternAtom(dpy, "ATOM", True);
+    if (stateatom == None || atomatom == None || hidetaskbaratom == None || hidepageratom == None)
+        return;
+
+    QSet<Atom> states;
+
+    long offset = 0;
+    bool ok = false;
+    do {
+        int r = XGetWindowProperty(dpy, win, stateatom, offset, 5, False,
+                                   atomatom, &retatom, &retfmt, &retnitems, &retbytes, &retprop);
+        if (r != Success || retatom == None)
+            return;
+
+        Q_ASSERT(retatom == atomatom && retfmt == 32);
+
+        Atom* atoms = reinterpret_cast<Atom*>(retprop);
+        for (unsigned int i = 0; i < retnitems; ++i)
+            states << atoms[i];
+
+        XFree(retprop);
+        offset += retnitems;
+    } while (retbytes > 0 && !ok);
+
+    // if the state contains our atoms, just return
+    if (states.contains(hidepageratom) && states.contains(hidetaskbaratom))
+        return;
+
+    // insert our new states into the set of existing states
+    states << hidepageratom << hidetaskbaratom;
+
+    // update the state of the window
+    Atom statearray[states.size()];
+    int statepos = 0;
+    foreach(Atom state, states) {
+        statearray[statepos++] = state;
+    }
+
+    XChangeProperty(dpy, win, stateatom, atomatom, 32, PropModeReplace,
+                    reinterpret_cast<unsigned char*>(statearray), states.size());
+#else
+    Q_UNUSED(w)
 #endif
 }
