@@ -111,7 +111,7 @@ static bool findWindow(Display* dpy, int screen, const QString &app, Window* w)
     if (clientatom == None || windowatom == None || pidatom == None || cardinalatom == None)
         return false;
 
-    long offset = 0;
+    unsigned long offset = 0;
     bool ok = false;
     do {
         int r = XGetWindowProperty(dpy, RootWindow(dpy, screen), clientatom, offset, 5, False,
@@ -227,7 +227,7 @@ void Invoker::hideFromPager(QWidget *w)
 
     QSet<Atom> states;
 
-    long offset = 0;
+    unsigned long offset = 0;
     do {
         int r = XGetWindowProperty(dpy, win, stateatom, offset, 5, False,
                                    atomatom, &retatom, &retfmt, &retnitems, &retbytes, &retprop);
