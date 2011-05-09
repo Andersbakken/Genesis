@@ -275,8 +275,7 @@ void Invoker::hideFromPager(QWidget *w)
 
     // Next, get a list of the existing window states
     QList<Atom> states;
-    if (!readProperty(dpy, win, stateatom, states))
-        return;
+    readProperty(dpy, win, stateatom, states);
 
     // Now, if the state contains our atoms, just return
     if (states.contains(hidepageratom) && states.contains(hidetaskbaratom))
