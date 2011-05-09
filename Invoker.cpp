@@ -74,6 +74,8 @@ static bool pidIsApp(long pid, const QString &app)
 template<typename T>
 static bool readProperty(Display* dpy, Window w, Atom property, QList<T>& data)
 {
+    data.clear();
+
     Atom retatom;
     int retfmt;
     unsigned long retnitems, retbytes;
@@ -83,7 +85,7 @@ static bool readProperty(Display* dpy, Window w, Atom property, QList<T>& data)
     int r;
     do {
         r = XGetWindowProperty(dpy, w, property, offset, 5, False, AnyPropertyType,
-                                   &retatom, &retfmt, &retnitems, &retbytes, &retprop);
+                               &retatom, &retfmt, &retnitems, &retbytes, &retprop);
         if (r != Success || retatom == None)
             return false;
 
@@ -143,31 +145,6 @@ static bool windowIsApp(Display* dpy, Window w, const QString &app, Atom pidatom
     return false;
 }
 
-// returns 'true' if the application named 'app' was found and also puts the window id in 'w'
-static bool findWindow(Display* dpy, int screen, const QString &app, Window* w)
-{
-    const Atom clientatom = XInternAtom(dpy, "_NET_CLIENT_LIST", True);
-    const Atom pidatom = XInternAtom(dpy, "_NET_WM_PID", True);
-    if (clientatom == None || pidatom == None)
-        return false;
-
-    QList<Window> windows;
-    bool ok = readProperty(dpy, RootWindow(dpy, screen), clientatom, windows);
-    if (!ok)
-        return false;
-
-    foreach(Window win, windows) {
-        qDebug() << "window" << QByteArray::number((int)win, 16);
-        if (windowIsApp(dpy, win, app, pidatom)) {
-            ok = true;
-            *w = win;
-            break;
-        }
-    }
-
-    return ok;
-}
-
 // raises the window 'w'
 static void raiseWindow(Display* dpy, int screen, Window w)
 {
@@ -192,17 +169,56 @@ static void raiseWindow(Display* dpy, int screen, Window w)
     XSendEvent(dpy, RootWindow(dpy, screen), False, SubstructureRedirectMask | SubstructureNotifyMask, &ev);
 }
 
+// returns 'true' if the application named 'app' was found and also puts the window id in 'w'
+static bool findAndRaiseWindow(Display* dpy, int screen, const QString &app)
+{
+    const Atom clientatom = XInternAtom(dpy, "_NET_CLIENT_LIST", True);
+    const Atom pidatom = XInternAtom(dpy, "_NET_WM_PID", True);
+    const Atom leaderatom = XInternAtom(dpy, "WM_CLIENT_LEADER", True);
+    if (clientatom == None || pidatom == None || leaderatom == None)
+        return false;
+
+    QList<Window> windows;
+    bool ok = readProperty(dpy, RootWindow(dpy, screen), clientatom, windows);
+    if (!ok)
+        return false;
+    ok = false;
+
+    QHash<Window, QList<Window> > clients;
+    Window leader = None, w = None;
+    QList<Window> currentleader;
+
+    foreach(const Window win, windows) {
+        if (readProperty(dpy, win, leaderatom, currentleader) && !currentleader.isEmpty())
+            clients[currentleader.front()].append(win);
+        if (!ok && windowIsApp(dpy, win, app, pidatom)) {
+            ok = true;
+            w = win;
+            leader = (currentleader.isEmpty() ? None : currentleader.front());
+        }
+    }
+
+    if (!ok)
+        return false;
+
+    if (leader == None)
+        raiseWindow(dpy, screen, w);
+    else {
+        const QList<Window> subs = clients.value(leader);
+        foreach(Window win, subs) {
+            raiseWindow(dpy, screen, win);
+        }
+    }
+
+    return true;
+}
+
 // returns 'true' if the application 'app' was found and raised
 static bool raise(const QString &app, const QWidget* widget)
 {
     Display* dpy = QX11Info::display();
     const int scrn = widget->x11Info().screen();
-    Window w = None;
-    if (findWindow(dpy, scrn, app, &w)) {
-        raiseWindow(dpy, scrn, w);
-        return true;
-    }
-    return false;
+    return findAndRaiseWindow(dpy, scrn, app);
 }
 #elif !defined(Q_OS_MAC)
 #error Do not know how to raise windows on this platform
@@ -244,47 +260,27 @@ void Invoker::hideFromPager(QWidget *w)
     Window win = w->winId();
     //qDebug() << "hiding from pager" << QByteArray::number((int)win, 16);
 
-    // First, get a list of the existing window states
-    Atom retatom;
-    int retfmt;
-    unsigned long retnitems, retbytes;
-    unsigned char* retprop;
+    // First, initialize all our atoms
     const Atom stateatom = XInternAtom(dpy, "_NET_WM_STATE", True);
+    const Atom atomatom = XInternAtom(dpy, "ATOM", True);
     const Atom hidetaskbaratom = XInternAtom(dpy, "_NET_WM_STATE_SKIP_TASKBAR", True);
     const Atom hidepageratom = XInternAtom(dpy, "_NET_WM_STATE_SKIP_PAGER", True);
-    const Atom atomatom = XInternAtom(dpy, "ATOM", True);
     if (stateatom == None || atomatom == None || hidetaskbaratom == None || hidepageratom == None)
         return;
 
-    QSet<Atom> states;
+    // Next, get a list of the existing window states
+    QList<Atom> states;
+    if (!readProperty(dpy, win, stateatom, states))
+        return;
 
-    unsigned long offset = 0;
-    do {
-        int r = XGetWindowProperty(dpy, win, stateatom, offset, 5, False,
-                                   atomatom, &retatom, &retfmt, &retnitems, &retbytes, &retprop);
-        if (r != Success)
-            return;
-        if (retatom == None)
-            break;
-
-        Q_ASSERT(retatom == atomatom && retfmt == 32);
-
-        Atom* atoms = reinterpret_cast<Atom*>(retprop);
-        for (unsigned int i = 0; i < retnitems; ++i)
-            states << atoms[i];
-
-        XFree(retprop);
-        offset += retnitems;
-    } while (retbytes > 0);
-
-    // if the state contains our atoms, just return
+    // Now, if the state contains our atoms, just return
     if (states.contains(hidepageratom) && states.contains(hidetaskbaratom))
         return;
 
-    // insert our new states into the set of existing states
+    // Insert our new states into the set of existing states
     states << hidepageratom << hidetaskbaratom;
 
-    // update the state of the window
+    // Update the state of the window
     Atom statearray[states.size()];
     int statepos = 0;
     foreach(Atom state, states) {
