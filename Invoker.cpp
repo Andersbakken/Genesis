@@ -98,15 +98,15 @@ static bool windowIsApp(Display* dpy, Window w, const QString &app, Atom pidatom
 // returns 'true' if the application named 'app' was found and also puts the window id in 'w'
 static bool findWindow(Display* dpy, int screen, const QString &app, Window* w)
 {
-    Atom windowatom, clientatom, pidatom, cardinalatom, retatom;
+    Atom retatom;
     int retfmt;
     unsigned long retnitems, retbytes;
     unsigned char* retprop;
 
-    clientatom = XInternAtom(dpy, "_NET_CLIENT_LIST", True);
-    windowatom = XInternAtom(dpy, "WINDOW", True);
-    pidatom = XInternAtom(dpy, "_NET_WM_PID", True);
-    cardinalatom = XInternAtom(dpy, "CARDINAL", True);
+    const Atom clientatom = XInternAtom(dpy, "_NET_CLIENT_LIST", True);
+    const Atom windowatom = XInternAtom(dpy, "WINDOW", True);
+    const Atom pidatom = XInternAtom(dpy, "_NET_WM_PID", True);
+    const Atom cardinalatom = XInternAtom(dpy, "CARDINAL", True);
     if (clientatom == None || windowatom == None || pidatom == None || cardinalatom == None)
         return false;
 
@@ -134,37 +134,6 @@ static bool findWindow(Display* dpy, int screen, const QString &app, Window* w)
     } while (retbytes > 0 && !ok);
 
     return ok;
-}
-
-// finds the last window in the window stack with window type 'normalatom'
-static void findLastNormal(Display* dpy, Atom typeatom, Atom normalatom, Atom atomatom,
-                           Window* windows, long num, Window* w)
-{
-    Atom retatom;
-    int retfmt;
-    unsigned long retnitems, retbytes;
-    unsigned char* retprop;
-
-    for (int wn = 0; wn < num; ++wn) {
-        long offset = 0;
-        do {
-            int r = XGetWindowProperty(dpy, windows[wn], typeatom, offset, 5, False,
-                                       atomatom, &retatom, &retfmt, &retnitems, &retbytes, &retprop);
-            if (r != Success || retatom == None)
-                return;
-
-            Q_ASSERT(retatom == atomatom && retfmt == 32);
-
-            Atom* atoms = reinterpret_cast<Atom*>(retprop);
-            for (unsigned long i = 0; i < retnitems; ++i) {
-                if (atoms[i] == normalatom)
-                    *w = windows[wn];
-            }
-
-            XFree(retprop);
-            offset += retnitems;
-        } while (retbytes > 0);
-    }
 }
 
 // raises the window 'w'
