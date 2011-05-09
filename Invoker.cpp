@@ -81,7 +81,7 @@ static bool windowIsApp(Display* dpy, Window w, const QString &app, Atom pidatom
             const int slash = app8bit.lastIndexOf('/');
             if (slash != -1)
                 app8bit = app8bit.mid(slash + 1);
-            QByteArray res = QByteArray::fromRawData(hint.res_name, strnlen(hint.res_name, 100) + 1);
+            QByteArray res = QByteArray::fromRawData(hint.res_name, strnlen(hint.res_name, 100));
             if (app8bit.toLower() == res.toLower()) {
                 XFree(hint.res_name);
                 return true;
