@@ -71,8 +71,48 @@ static bool pidIsApp(long pid, const QString &app)
     return false;
 }
 
+template<typename T>
+static bool readProperty(Display* dpy, Window w, Atom property, QList<T>& data)
+{
+    Atom retatom;
+    int retfmt;
+    unsigned long retnitems, retbytes;
+    unsigned char* retprop;
+
+    unsigned long offset = 0;
+    int r;
+    do {
+        r = XGetWindowProperty(dpy, w, property, offset, 5, False, AnyPropertyType,
+                                   &retatom, &retfmt, &retnitems, &retbytes, &retprop);
+        if (r != Success || retatom == None)
+            return false;
+
+        Q_ASSERT(retfmt == (sizeof(T) * 8));
+
+        const T* retdata = reinterpret_cast<T*>(retprop);
+        for (unsigned long i = 0; i < retnitems; ++i)
+            data << retdata[i];
+
+        switch(retfmt) {
+        case 8:
+            offset += retnitems * 4;
+            break;
+        case 16:
+            offset += retnitems * 2;
+            break;
+        case 32:
+            offset += retnitems;
+            break;
+        default:
+            qFatal("Invalid format returned in readProperty: %d", retfmt);
+        }
+    } while (retbytes > 0);
+
+    return true;
+}
+
 // returns 'true' if the window 'w' belongs to the app 'app'
-static bool windowIsApp(Display* dpy, Window w, const QString &app, Atom pidatom, Atom cardinalatom)
+static bool windowIsApp(Display* dpy, Window w, const QString &app, Atom pidatom)
 {
     XClassHint hint;
     if (XGetClassHint(dpy, w, &hint) != 0) {
@@ -93,24 +133,11 @@ static bool windowIsApp(Display* dpy, Window w, const QString &app, Atom pidatom
             XFree(hint.res_class);
     }
 
-    Atom retatom;
-    int retfmt;
-    unsigned long retnitems, retbytes;
-    unsigned char* retprop;
 
-    int r = XGetWindowProperty(dpy, w, pidatom, 0, 1, False, cardinalatom, &retatom,
-                               &retfmt, &retnitems, &retbytes, &retprop);
-    if (r == Success && retatom != None) {
-        Q_ASSERT(retfmt == 32 && retnitems == 1);
-
-        long* longs = reinterpret_cast<long*>(retprop);
-        //qDebug() << "window" << QByteArray::number((int)w, 16) << "has pid" << *longs;
-        if (pidIsApp(*longs, app)) {
-            XFree(retprop);
+    QList<long> pids;
+    if (readProperty(dpy, w, pidatom, pids) && !pids.isEmpty()) {
+        if (pidIsApp(pids.front(), app))
             return true;
-        }
-
-        XFree(retprop);
     }
 
     return false;
@@ -119,40 +146,24 @@ static bool windowIsApp(Display* dpy, Window w, const QString &app, Atom pidatom
 // returns 'true' if the application named 'app' was found and also puts the window id in 'w'
 static bool findWindow(Display* dpy, int screen, const QString &app, Window* w)
 {
-    Atom retatom;
-    int retfmt;
-    unsigned long retnitems, retbytes;
-    unsigned char* retprop;
-
     const Atom clientatom = XInternAtom(dpy, "_NET_CLIENT_LIST", True);
-    const Atom windowatom = XInternAtom(dpy, "WINDOW", True);
     const Atom pidatom = XInternAtom(dpy, "_NET_WM_PID", True);
-    const Atom cardinalatom = XInternAtom(dpy, "CARDINAL", True);
-    if (clientatom == None || windowatom == None || pidatom == None || cardinalatom == None)
+    if (clientatom == None || pidatom == None)
         return false;
 
-    unsigned long offset = 0;
-    bool ok = false;
-    do {
-        int r = XGetWindowProperty(dpy, RootWindow(dpy, screen), clientatom, offset, 5, False,
-                                   windowatom, &retatom, &retfmt, &retnitems, &retbytes, &retprop);
-        if (r != Success || retatom == None)
-            return false;
+    QList<Window> windows;
+    bool ok = readProperty(dpy, RootWindow(dpy, screen), clientatom, windows);
+    if (!ok)
+        return false;
 
-        Q_ASSERT(retatom == windowatom && retfmt == 32);
-
-        Window* windows = reinterpret_cast<Window*>(retprop);
-        for (unsigned int i = 0; i < retnitems; ++i) {
-            if (windowIsApp(dpy, windows[i], app, pidatom, cardinalatom)) {
-                ok = true;
-                *w = windows[i];
-                break;
-            }
+    foreach(Window win, windows) {
+        qDebug() << "window" << QByteArray::number((int)win, 16);
+        if (windowIsApp(dpy, win, app, pidatom)) {
+            ok = true;
+            *w = win;
+            break;
         }
-
-        XFree(retprop);
-        offset += retnitems;
-    } while (retbytes > 0 && !ok);
+    }
 
     return ok;
 }
