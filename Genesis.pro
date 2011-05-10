@@ -22,7 +22,8 @@ HEADERS += Chooser.h \
            ResultList.h \
            ResultModel.h \
            PreviousWindow.h \
-    Invoker.h
+           Invoker.h \
+           FileIconProvider.h
 
 SOURCES += Chooser.cpp \
            Config.cpp \
@@ -35,7 +36,8 @@ SOURCES += Chooser.cpp \
            ResultModel.cpp \
            main.cpp \
            3rdParty/cJSON/cJSON.c \
-    Invoker.cpp
+           Invoker.cpp \
+           FileIconProvider.cpp
 
 RESOURCES = Genesis.qrc
 

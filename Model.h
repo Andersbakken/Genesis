@@ -3,6 +3,7 @@
 
 #include <QtGui>
 #include "Config.h"
+#include "FileIconProvider.h"
 
 struct Match
 {
@@ -72,7 +73,7 @@ private:
     QList<Item> mItems;
     QList<ItemIndex> mItemIndex;
     const QList<QByteArray> mRoots;
-    QFileIconProvider mFileIconProvider;
+    FileIconProvider mFileIconProvider;
     QFileSystemWatcher *mFileSystemWatcher;
     QList<UserEntry> mUserEntries;
     QList<QVariantMap> mUrlHandlers;
