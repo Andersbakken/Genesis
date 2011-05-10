@@ -16,7 +16,7 @@ static QIcon readIconFrom(const QByteArray& path, const QByteArray& iconname, in
         return QIcon();
 
     QByteArray fn;
-    static const char* exts[] = { ".xpm", ".png" };
+    static const char* exts[] = { ".xpm", ".png", 0 };
     for (int i = 0; ; ++i) {
         if (!exts[i])
             break;
