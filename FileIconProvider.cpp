@@ -35,7 +35,7 @@ static QIcon readIconFrom(const QByteArray& path, const QByteArray& iconname, in
     while (readdir_r(dir, &d, &res) == 0 && res != 0) {
         if (d.d_type == DT_DIR) {
             if (strcmp(d.d_name, ".") && strcmp(d.d_name, "..")) {
-                icn = readIconFrom(path + '/' + QByteArray(d.d_name), iconname, depth + 1);
+                icn = readIconFrom(path + QByteArray(d.d_name) + '/', iconname, depth + 1);
                 if (!icn.isNull()) {
                     closedir(dir);
                     return icn;
