@@ -111,6 +111,7 @@ QIcon FileIconProvider::icon(const QFileInfo &info) const
                 genesisIconCache()->insert(app, icn);
                 return icn;
             }
+            break;
         }
     }
 
