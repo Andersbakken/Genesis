@@ -6,7 +6,7 @@
 
 #if defined(Q_OS_UNIX) && !defined(Q_OS_MAC)
 typedef QHash<QString, QIcon> iconHash;
-Q_GLOBAL_STATIC(iconHash, globalIconCache)
+Q_GLOBAL_STATIC(iconHash, genesisIconCache)
 
 #define MAX_ICON_RECURSE_DEPTH 1
 
@@ -91,8 +91,8 @@ QIcon FileIconProvider::icon(const QFileInfo &info) const
     // Try to find icons as defined in the icon theme specification
     QString app = info.fileName();
 
-    iconHash::const_iterator cacheit = globalIconCache()->find(app);
-    if (cacheit != globalIconCache()->end())
+    iconHash::const_iterator cacheit = genesisIconCache()->find(app);
+    if (cacheit != genesisIconCache()->end())
         return cacheit.value();
 
     static QString share = QLatin1String("/usr/share/applications/");
@@ -108,7 +108,7 @@ QIcon FileIconProvider::icon(const QFileInfo &info) const
         if (line.toLower().startsWith("icon=")) {
             icn = readIcon(line.mid(5));
             if (!icn.isNull()) {
-                globalIconCache()->insert(app, icn);
+                genesisIconCache()->insert(app, icn);
                 return icn;
             }
         }
@@ -116,10 +116,10 @@ QIcon FileIconProvider::icon(const QFileInfo &info) const
 
     icn = readIcon(app.toLocal8Bit());
     if (!icn.isNull()) {
-        globalIconCache()->insert(app, icn);
+        genesisIconCache()->insert(app, icn);
         return icn;
     }
-    globalIconCache()->insert(app, defaulticon);
+    genesisIconCache()->insert(app, defaulticon);
 #endif
     return defaulticon;
 }
