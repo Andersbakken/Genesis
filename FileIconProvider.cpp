@@ -5,8 +5,8 @@
 #include <QDebug>
 
 #if defined(Q_OS_UNIX) && !defined(Q_OS_MAC)
-typedef QHash<QString, QIcon> iconHash;
-Q_GLOBAL_STATIC(iconHash, genesisIconCache)
+typedef QHash<QString, QIcon> IconHash;
+Q_GLOBAL_STATIC(IconHash, genesisIconCache)
 
 #define MAX_ICON_RECURSE_DEPTH 1
 
@@ -91,7 +91,7 @@ QIcon FileIconProvider::icon(const QFileInfo &info) const
     // Try to find icons as defined in the icon theme specification
     QString app = info.fileName();
 
-    iconHash::const_iterator cacheit = genesisIconCache()->find(app);
+    IconHash::const_iterator cacheit = genesisIconCache()->find(app);
     if (cacheit != genesisIconCache()->end())
         return cacheit.value();
 
