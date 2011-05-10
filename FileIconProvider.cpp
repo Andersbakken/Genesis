@@ -1,15 +1,18 @@
 #include "FileIconProvider.h"
 #include <QFile>
 #include <stdlib.h>
+#include <dirent.h>
 #include <QDebug>
 
 #if defined(Q_OS_UNIX) && !defined(Q_OS_MAC)
 typedef QHash<QString, QIcon> iconHash;
 Q_GLOBAL_STATIC(iconHash, globalIconCache)
 
-static QIcon readIconFrom(const QByteArray& path, const QByteArray& iconname)
+#define MAX_ICON_RECURSE_DEPTH 1
+
+static QIcon readIconFrom(const QByteArray& path, const QByteArray& iconname, int depth = 0)
 {
-    if (path.isEmpty())
+    if (path.isEmpty() || depth > MAX_ICON_RECURSE_DEPTH)
         return QIcon();
 
     QByteArray fn;
@@ -23,6 +26,25 @@ static QIcon readIconFrom(const QByteArray& path, const QByteArray& iconname)
             return icn;
         }
     }
+
+    QIcon icn;
+    DIR *dir = opendir(path.constData());
+    if (!dir)
+        return QIcon();
+    struct dirent d, *res;
+    while (readdir_r(dir, &d, &res) == 0 && res != 0) {
+        if (d.d_type == DT_DIR) {
+            if (strcmp(d.d_name, ".") && strcmp(d.d_name, "..")) {
+                icn = readIconFrom(path + '/' + QByteArray(d.d_name), iconname, depth + 1);
+                if (!icn.isNull()) {
+                    closedir(dir);
+                    return icn;
+                }
+            }
+        }
+    }
+
+    closedir(dir);
 
     return QIcon();
 }
@@ -51,6 +73,9 @@ static QIcon readIcon(const QByteArray& iconname)
             return icon;
     }
     icon = readIconFrom(QByteArray("/usr/share/pixmaps/"), iconname);
+    if (!icon.isNull())
+        return icon;
+    icon = readIconFrom(QByteArray("/usr/share/icons/gnome/48x48/"), iconname);
     return icon;
 }
 #endif
