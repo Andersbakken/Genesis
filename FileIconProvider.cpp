@@ -99,8 +99,10 @@ QIcon FileIconProvider::icon(const QFileInfo &info) const
     static QString desktop = QLatin1String(".desktop");
 
     QFile appfile(share + app + desktop);
-    if (!appfile.open(QFile::ReadOnly))
+    if (!appfile.open(QFile::ReadOnly)) {
+        genesisIconCache()->insert(app, defaulticon);
         return defaulticon;
+    }
 
     QIcon icn;
     QList<QByteArray> lines = appfile.readAll().split('\n');
