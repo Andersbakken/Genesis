@@ -9,6 +9,7 @@
 #include <X11/Xutil.h>
 
 #define MIN_EQLEN 6
+#define ICON_SUFFICIENT_SIZE 48
 
 static inline QByteArray processName(const QByteArray& name)
 {
@@ -301,7 +302,7 @@ bool System::raise(const QString &application)
     return findAndRaiseWindow(dpy, mScreen, application);
 }
 
-static int parseIcon(const QList<unsigned int>& icons, int pos, QIcon* icon, int* width, int* height)
+static inline int parseIcon(const QList<unsigned int>& icons, int pos, QIcon* icon, int* width, int* height)
 {
     if (pos + 1 >= icons.size())
         return -1;
@@ -343,6 +344,8 @@ QIcon System::readIcon(Display *dpy, WId winId)
             ow = w;
             oh = h;
             icon = tmpicon;
+            if (w >= ICON_SUFFICIENT_SIZE || h >= ICON_SUFFICIENT_SIZE)
+                break;
         }
     }
 
