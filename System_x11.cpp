@@ -292,6 +292,9 @@ static inline int parseIcon(const QList<unsigned int>& icons, int pos, QIcon* ic
     int w = icons.at(pos++);
     int h = icons.at(pos++);
 
+    if (w > ICON_MAX_SIZE || h > ICON_MAX_SIZE)
+        return -1;
+
     QImage img(w, h, QImage::Format_ARGB32);
     int y, x, pixel;
     for (y = 0; y < h; ++y) {
