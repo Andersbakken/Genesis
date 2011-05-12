@@ -1,11 +1,24 @@
 #include "FileIconProvider.h"
+#include "System.h"
 #include <QFile>
 #include <stdlib.h>
 #include <dirent.h>
 #include <QDebug>
+#ifdef Q_WS_X11
+#    include <QX11Info>
+#endif
 
 #if defined(Q_OS_UNIX) && !defined(Q_OS_MAC)
-typedef QHash<QString, QIcon> IconHash;
+struct GenesisIcon
+{
+    GenesisIcon() : fromWindow(false) {}
+    GenesisIcon(bool fw, const QIcon& i) : fromWindow(fw), icon(i) {}
+
+    bool fromWindow;
+    QIcon icon;
+};
+
+typedef QHash<QString, GenesisIcon> IconHash;
 Q_GLOBAL_STATIC(IconHash, genesisIconCache)
 
 #define MAX_ICON_RECURSE_DEPTH 1
@@ -80,7 +93,8 @@ static QIcon readIcon(const QByteArray& iconname)
 }
 #endif
 
-FileIconProvider::FileIconProvider()
+FileIconProvider::FileIconProvider(QWidget* widget)
+    : mWidget(widget)
 {
 }
 
@@ -91,16 +105,37 @@ QIcon FileIconProvider::icon(const QFileInfo &info) const
     // Try to find icons as defined in the icon theme specification
     QString app = info.fileName();
 
-    IconHash::const_iterator cacheit = genesisIconCache()->find(app);
-    if (cacheit != genesisIconCache()->end())
-        return cacheit.value();
+    Q_ASSERT(mWidget != 0);
+
+    const IconHash::iterator cacheit = genesisIconCache()->find(app);
+    const bool atend = (cacheit == genesisIconCache()->end());
+
+    if (atend || !cacheit.value().fromWindow) {
+        WId win;
+
+        if (System::instance(mWidget->x11Info().screen())->findWindow(app, &win)) {
+            QIcon icn = System::readIcon(QX11Info::display(), win);
+            if (!icn.isNull()) {
+                if (atend)
+                    genesisIconCache()->insert(app, GenesisIcon(true, icn));
+                else {
+                    cacheit.value().fromWindow = true;
+                    cacheit.value().icon = icn;
+                }
+                return icn;
+            }
+        }
+        if (!atend)
+            return cacheit.value().icon;
+    } else if (!atend)
+        return cacheit.value().icon;
 
     static QString share = QLatin1String("/usr/share/applications/");
     static QString desktop = QLatin1String(".desktop");
 
     QFile appfile(share + app + desktop);
     if (!appfile.open(QFile::ReadOnly)) {
-        genesisIconCache()->insert(app, defaulticon);
+        genesisIconCache()->insert(app, GenesisIcon(false, defaulticon));
         return defaulticon;
     }
 
@@ -110,7 +145,7 @@ QIcon FileIconProvider::icon(const QFileInfo &info) const
         if (line.toLower().startsWith("icon=")) {
             icn = readIcon(line.mid(5));
             if (!icn.isNull()) {
-                genesisIconCache()->insert(app, icn);
+                genesisIconCache()->insert(app, GenesisIcon(false, icn));
                 return icn;
             }
             break;
@@ -119,10 +154,10 @@ QIcon FileIconProvider::icon(const QFileInfo &info) const
 
     icn = readIcon(app.toLocal8Bit());
     if (!icn.isNull()) {
-        genesisIconCache()->insert(app, icn);
+        genesisIconCache()->insert(app, GenesisIcon(false, icn));
         return icn;
     }
-    genesisIconCache()->insert(app, defaulticon);
+    genesisIconCache()->insert(app, GenesisIcon(false, defaulticon));
 #endif
     return defaulticon;
 }

@@ -63,8 +63,8 @@ bool Model::UserEntry::matches(const QString &text) const
     return input.startsWith(text);
 }
 
-Model::Model(const QByteArray &roots, QObject *parent)
-    : QObject(parent), mRoots(roots.split(':')), mFileSystemWatcher(0)
+Model::Model(const QByteArray &roots, QWidget *parent)
+    : QObject(parent), mRoots(roots.split(':')), mFileIconProvider(parent), mFileSystemWatcher(0)
 {
     Config config;
     restoreUserEntries(&config);
@@ -148,9 +148,7 @@ QList<Match> Model::matches(const QString &text) const
             const QList<ItemIndex>::const_iterator indexEnd = mItemIndex.end();
             while (found != indexEnd && (*found).matches(strfind)) {
                 foreach(const Item* item, (*found).items) {
-                    const Match m(Match::Application, item->name, item->filePath, item->iconPath.isEmpty()
-                                  ? mFileIconProvider.icon(QFileInfo(item->filePath))
-                                  : QIcon(item->iconPath), item->arguments);
+                    const Match m(Match::Application, item->name, item->filePath, QIcon(item->iconPath), item->arguments);
                     if (matchcount.contains(m))
                         matchcount[m] += 1;
                     else {
@@ -197,6 +195,15 @@ QList<Match> Model::matches(const QString &text) const
         // ### not optimal at all
         while (matches.size() > maxMatches)
             matches.removeLast();
+
+        QList<Match>::iterator matchit = matches.begin();
+        QList<Match>::const_iterator matchend = matches.end();
+        while (matchit != matchend) {
+            if ((*matchit).icon.isNull()) {
+                (*matchit).icon = mFileIconProvider.icon(QFileInfo((*matchit).filePath));
+            }
+            ++matchit;
+        }
 
         // ### could store the matches and modify them here
         for (int i=0; i<urlHandlerCount; ++i) {

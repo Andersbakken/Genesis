@@ -23,7 +23,8 @@ HEADERS += Chooser.h \
            ResultModel.h \
            PreviousWindow.h \
            Invoker.h \
-           FileIconProvider.h
+           FileIconProvider.h \
+    System.h
 
 SOURCES += Chooser.cpp \
            Config.cpp \
@@ -37,7 +38,8 @@ SOURCES += Chooser.cpp \
            main.cpp \
            3rdParty/cJSON/cJSON.c \
            Invoker.cpp \
-           FileIconProvider.cpp
+           FileIconProvider.cpp \
+    System.cpp
 
 RESOURCES = Genesis.qrc
 
@@ -45,9 +47,9 @@ mac {
     QMAKE_INFO_PLIST = Info.plist
     LIBS += -framework Carbon -framework Foundation
 
-    SOURCES += PreviousWindow_mac.cpp
+    SOURCES += PreviousWindow_mac.cpp System_mac.cpp
 } else:unix {
-    SOURCES += PreviousWindow_x11.cpp
+    SOURCES += PreviousWindow_x11.cpp System_x11.cpp
 } else {
     SOURCES += PreviousWindow_empty.cpp
 }

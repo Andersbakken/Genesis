@@ -13,9 +13,6 @@ public:
     void setApplication(const QString& application, const QStringList& arguments);
     void invoke();
 
-    static void raise(QWidget* w);
-    static void hideFromPager(QWidget* w);
-
 private:
     QString mApplication;
     QStringList mArguments;

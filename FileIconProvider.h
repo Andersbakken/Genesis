@@ -6,9 +6,12 @@
 class FileIconProvider : public QFileIconProvider
 {
 public:
-    FileIconProvider();
+    FileIconProvider(QWidget* widget);
 
     QIcon icon(const QFileInfo &info) const;
+
+private:
+    QWidget* mWidget;
 };
 
 #endif // FILEICONPROVIDER_H

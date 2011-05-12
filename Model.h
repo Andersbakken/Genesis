@@ -30,7 +30,7 @@ class Model : public QObject
 {
     Q_OBJECT
 public:
-    Model(const QByteArray &paths, QObject *parent = 0);
+    Model(const QByteArray &paths, QWidget *parent);
     QList<Match> matches(const QString &text) const;
     const QList<QByteArray> &roots() const;
     void recordUserEntry(const QString &input, const QString &path);

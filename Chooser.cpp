@@ -7,6 +7,7 @@
 #include "Server.h"
 #include "PreviousWindow.h"
 #include "Invoker.h"
+#include "System.h"
 
 static void animate(QWidget *target, bool enter, int heightdiff = 0)
 {
@@ -166,7 +167,7 @@ Chooser::Chooser(QWidget *parent)
     mKeepAlive.start();
     connect(mResultList, SIGNAL(unhandledUp()), this, SLOT(onUnhandledUp()));
 
-    Invoker::hideFromPager(this);
+    System::hideFromPager(this);
 }
 
 void Chooser::shortcutActivated(int shortcut)
@@ -223,14 +224,14 @@ void Chooser::enable()
 {
     static const bool showHide = Config().isEnabled("showHide", false);
     if (showHide) {
-        Invoker::hideFromPager(this);
+        System::hideFromPager(this);
         show();
         QApplication::flush();
         QApplication::syncX();
     }
 
     setWindowOpacity(0.);
-    Invoker::raise(this);
+    System::raise(this);
 
     const int animateHeight = mResultList->isHidden() ? (mResultShownHeight - mResultHiddenHeight) / 2 : 0;
     ::animate(this, true, animateHeight);
