@@ -175,11 +175,12 @@ static inline bool findAndRaiseWindow(Display* dpy, int screen, const QString &a
     if (winit == genesisInfo()->windownames.end())
         return false;
 
-    Window targetwin = winit.value(), leader = None;
+    const Window targetwin = winit.value();
+    Window leader = None;
     QHash<Window, QList<Window> > clients;
     QList<Window> currentleader;
 
-    QSet<Window> windows = genesisInfo()->allwindows;
+    const QSet<Window>& windows = genesisInfo()->allwindows;
     foreach(const Window win, windows) {
         if (readProperty(dpy, win, leaderatom, currentleader) && !currentleader.isEmpty())
             clients[currentleader.front()].append(win);
@@ -211,28 +212,6 @@ static inline QByteArray processName(const QByteArray& name)
     data[len] = '\0';
 
     return QByteArray(data);
-}
-
-QSet<QByteArray> System::processes()
-{
-    QSet<QByteArray> ps;
-    DIR* dir = opendir("/proc");
-    if (!dir)
-        return ps;
-
-    struct dirent d, *dret;
-    QByteArray name;
-    while (readdir_r(dir, &d, &dret) == 0 && dret != 0) {
-        if (d.d_type == DT_DIR) {
-            name = processName(QByteArray(d.d_name));
-            if (!name.isEmpty())
-                ps.insert(name);
-        }
-    }
-
-    closedir(dir);
-
-    return ps;
 }
 
 void System::raise(QWidget *w)

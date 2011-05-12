@@ -18,8 +18,6 @@ public:
     static void raise(QWidget* w);
     static void hideFromPager(QWidget* w);
 
-    static QSet<QByteArray> processes();
-
 #ifdef Q_WS_X11
     static QIcon readIcon(Display* dpy, WId winId);
 #endif

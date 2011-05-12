@@ -23,8 +23,3 @@ bool System::raise(const QString &application)
     Q_UNUSED(application)
     return false;
 }
-
-QSet<QByteArray> System::processes()
-{
-    return QSet<QByteArray>();
-}
