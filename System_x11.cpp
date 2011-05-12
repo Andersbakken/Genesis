@@ -199,20 +199,6 @@ static inline bool findAndRaiseWindow(Display* dpy, int screen, const QString &a
     return true;
 }
 
-static inline QByteArray processName(const QByteArray& name)
-{
-    const QByteArray file = "/proc/" + name + "/exe";
-    const int maxsize = 1024;
-    char data[maxsize + 1];
-
-    ssize_t len = ::readlink(file.constData(), data, maxsize);
-    if (len == -1)
-        return QByteArray();
-    data[len] = '\0';
-
-    return QByteArray(data);
-}
-
 void System::raise(QWidget *w)
 {
     Display* dpy = QX11Info::display();
