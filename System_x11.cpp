@@ -9,7 +9,6 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-#define MIN_EQLEN 6
 #define ICON_SUFFICIENT_SIZE 48
 #define ICON_MAX_SIZE 1024
 
