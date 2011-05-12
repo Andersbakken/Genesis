@@ -284,21 +284,25 @@ bool System::raise(const QString &application)
     return findAndRaiseWindow(dpy, mScreen, application);
 }
 
-static inline int parseIcon(const QList<unsigned int>& icons, int pos, QIcon* icon, int* width, int* height)
+static inline int parseIcon(const QList<unsigned long>& icons, int pos, QIcon* icon,
+                            unsigned long* width, unsigned long* height)
 {
     if (pos + 1 >= icons.size())
         return -1;
-    unsigned int w = icons.at(pos++);
-    unsigned h = icons.at(pos++);
+
+    unsigned long w = icons.at(pos++);
+    unsigned long h = icons.at(pos++);
 
     if (w > ICON_MAX_SIZE || h > ICON_MAX_SIZE)
         return -1;
 
     QImage img(w, h, QImage::Format_ARGB32);
-    unsigned int y, x, pixel;
+    unsigned long y, x;
+    unsigned int pixel;
+
     for (y = 0; y < h; ++y) {
         for (x = 0; x < w; ++x) {
-            pixel = icons.at(pos++);
+            pixel = static_cast<unsigned int>(icons.at(pos++));
             img.setPixel(x, y, pixel);
         }
     }
@@ -315,11 +319,12 @@ QIcon System::readIcon(Display *dpy, WId winId)
     if (iconatom == None)
         return QIcon();
 
-    // ### Should probably not read icons as a list of ints
-    QList<unsigned int> icons;
+    // ### Should probably not read icons as a list of longs
+    QList<unsigned long> icons;
     readProperty(dpy, winId, iconatom, icons);
 
-    int pos = 0, w, h, ow = 0, oh = 0;
+    int pos = 0;
+    unsigned long w = 0, h = 0, ow = 0, oh = 0;
     QIcon icon, tmpicon;
     for (;;) {
         pos = parseIcon(icons, pos, &tmpicon, &w, &h);
