@@ -13,32 +13,16 @@
 
 static inline QByteArray processName(const QByteArray& name)
 {
-    const QByteArray file = "/proc/" + name + "/cmdline";
-    const int fd = ::open(file.constData(), O_RDONLY);
-    if (fd == -1)
-        return QByteArray();
+    const QByteArray file = "/proc/" + name + "/exe";
     const int maxsize = 1024;
     char data[maxsize + 1];
-    ssize_t num, pos = 0;
-    do {
-        num = ::read(fd, data + pos, maxsize - pos);
-        if (num == -1 || pos + num == maxsize) {
-            ::close(fd);
-            return QByteArray();
-        }
-        pos += num;
-    } while (num > 0);
-    ::close(fd);
 
-    if (!pos)
+    ssize_t len = ::readlink(file.constData(), data, maxsize);
+    if (len == -1)
         return QByteArray();
+    data[len] = '\0';
 
-    const char* start = &data[0];
-    const char* end = start + pos;
-    while (start != end && *start != ' ')
-        ++start;
-
-    return QByteArray(data, start - &data[0]);
+    return QByteArray(data);
 }
 
 static inline bool pidIsApp(long pid, const QString &app)

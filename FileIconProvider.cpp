@@ -109,11 +109,12 @@ QIcon FileIconProvider::icon(const QFileInfo &info) const
 
     const IconHash::iterator cacheit = genesisIconCache()->find(app);
     const bool atend = (cacheit == genesisIconCache()->end());
-
     if (atend || !cacheit.value().fromWindow) {
         WId win;
 
-        if (System::instance(mWidget->x11Info().screen())->findWindow(app, &win)) {
+        const QSet<QByteArray> processes = System::processes();
+        const bool running = processes.contains(info.canonicalFilePath().toLocal8Bit());
+        if (running && System::instance(mWidget->x11Info().screen())->findWindow(app, &win)) {
             QIcon icn = System::readIcon(QX11Info::display(), win);
             if (!icn.isNull()) {
                 if (atend)
@@ -125,10 +126,12 @@ QIcon FileIconProvider::icon(const QFileInfo &info) const
                 return icn;
             }
         }
-        if (!atend)
+        if (!atend) {
             return cacheit.value().icon;
-    } else if (!atend)
+        }
+    } else if (!atend) {
         return cacheit.value().icon;
+    }
 
     static QString share = QLatin1String("/usr/share/applications/");
     static QString desktop = QLatin1String(".desktop");
