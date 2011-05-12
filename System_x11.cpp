@@ -83,7 +83,7 @@ static inline QByteArray windowName(Display* dpy, Window w)
     return res;
 }
 
-static void inline updateWindows(Display* dpy, const QList<Window>& windows)
+static inline void updateWindows(Display* dpy, const QList<Window>& windows)
 {
     genesisInfo()->allwindows.clear();
     genesisInfo()->windownames.clear();
