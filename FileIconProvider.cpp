@@ -112,9 +112,7 @@ QIcon FileIconProvider::icon(const QFileInfo &info) const
     if (atend || !cacheit.value().fromWindow) {
         WId win;
 
-        const QSet<QByteArray> processes = System::processes();
-        const bool running = processes.contains(info.canonicalFilePath().toLocal8Bit());
-        if (running && System::instance(mWidget->x11Info().screen())->findWindow(app, &win)) {
+        if (System::instance(mWidget->x11Info().screen())->findWindow(app, &win)) {
             QIcon icn = System::readIcon(QX11Info::display(), win);
             if (!icn.isNull()) {
                 if (atend)
