@@ -36,7 +36,7 @@ static inline bool readProperty(Display* dpy, Window w, Atom property, QList<T>&
     unsigned long offset = 0;
     int r;
     do {
-        r = XGetWindowProperty(dpy, w, property, offset, 5, False, AnyPropertyType,
+        r = XGetWindowProperty(dpy, w, property, offset, 200, False, AnyPropertyType,
                                &retatom, &retfmt, &retnitems, &retbytes, &retprop);
         if (r != Success || retatom == None)
             return false;
