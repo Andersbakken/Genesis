@@ -124,6 +124,11 @@ static bool eventFilter(void* message)
 
 static inline void initWindows(Display* dpy, int screen)
 {
+    static bool inited = false;
+    if (inited)
+        return;
+    inited = true;
+
     const Atom clientatom = XInternAtom(dpy, "_NET_CLIENT_LIST", True);
     if (clientatom == None)
         return;
