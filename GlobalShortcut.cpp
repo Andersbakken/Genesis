@@ -62,6 +62,7 @@ public:
 #ifdef Q_WS_X11
     static bool dispatcherEventHandler(void* message);
     static Window root;
+    static QAbstractEventDispatcher::EventFilter sFilter;
 #endif
 };
 
@@ -69,6 +70,7 @@ QHash<int, Shortcut> GlobalShortcutPrivate::shortcuts;
 
 #if defined(Q_WS_X11)
 Window GlobalShortcutPrivate::root;
+QAbstractEventDispatcher::EventFilter GlobalShortcutPrivate::sFilter;
 
 bool GlobalShortcutPrivate::dispatcherEventHandler(void* message)
 {
@@ -91,7 +93,7 @@ bool GlobalShortcutPrivate::dispatcherEventHandler(void* message)
             ++it;
         }
     }
-    return false;
+    return sFilter ? sFilter(message) : false;
 }
 #elif defined(Q_OS_MAC)
 static OSStatus hotKeyHandler(EventHandlerCallRef nextHandler, EventRef event, void *userData)
@@ -126,7 +128,7 @@ GlobalShortcut::GlobalShortcut(QObject* parent)
 #elif defined(Q_WS_X11)
         const int screen = qApp->topLevelWidgets().front()->x11Info().screen();
         GlobalShortcutPrivate::root = RootWindow(QX11Info::display(), screen);
-        QAbstractEventDispatcher::instance()->setEventFilter(GlobalShortcutPrivate::dispatcherEventHandler);
+        GlobalShortcutPrivate::sFilter = QAbstractEventDispatcher::instance()->setEventFilter(GlobalShortcutPrivate::dispatcherEventHandler);
 #endif
     }
 }

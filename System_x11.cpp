@@ -2,6 +2,7 @@
 #include "Config.h"
 #include <QHash>
 #include <QX11Info>
+#include <QAbstractEventDispatcher>
 #include <dirent.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -10,38 +11,17 @@
 
 #define MIN_EQLEN 6
 #define ICON_SUFFICIENT_SIZE 48
+#define ICON_MAX_SIZE 1024
 
-static inline QByteArray processName(const QByteArray& name)
+struct GenesisSystemInfo
 {
-    const QByteArray file = "/proc/" + name + "/exe";
-    const int maxsize = 1024;
-    char data[maxsize + 1];
-
-    ssize_t len = ::readlink(file.constData(), data, maxsize);
-    if (len == -1)
-        return QByteArray();
-    data[len] = '\0';
-
-    return QByteArray(data);
-}
-
-static inline bool pidIsApp(long pid, const QString &app)
-{
-    //qDebug() << "hasPid" << data << "vs input," << app << "from file" << file << num;
-    QByteArray cmdline = processName(QByteArray::number(static_cast<qlonglong>(pid)));
-    if (cmdline.isEmpty())
-        return false;
-
-    QByteArray app8bit = app.toLocal8Bit();
-    const int slash = app8bit.lastIndexOf('/');
-    if (slash != -1)
-        app8bit = app8bit.mid(slash + 1);
-    if (cmdline.size() >= MIN_EQLEN && cmdline.contains(app8bit))
-        return true;
-    else if (app.toLocal8Bit() == cmdline)
-        return true;
-    return false;
-}
+    QHash<QByteArray, Window> windownames;
+    QSet<Window> allwindows;
+    QAbstractEventDispatcher::EventFilter filter;
+    Display* dpy;
+    int screen;
+};
+Q_GLOBAL_STATIC(GenesisSystemInfo, genesisInfo)
 
 template<typename T>
 static inline bool readProperty(Display* dpy, Window w, Atom property, QList<T>& data)
@@ -86,39 +66,74 @@ static inline bool readProperty(Display* dpy, Window w, Atom property, QList<T>&
     return true;
 }
 
-// returns 'true' if the window 'w' belongs to the app 'app'
-static inline bool windowIsApp(Display* dpy, Window w, const QString &app, Atom pidatom)
+static inline QByteArray windowName(Display* dpy, Window w)
 {
+    QByteArray res;
+
     XClassHint hint;
     if (XGetClassHint(dpy, w, &hint) != 0) {
         if (hint.res_name) {
-            QByteArray app8bit = app.toLocal8Bit();
-            const int slash = app8bit.lastIndexOf('/');
-            if (slash != -1)
-                app8bit = app8bit.mid(slash + 1);
-            QByteArray res = QByteArray::fromRawData(hint.res_name, strnlen(hint.res_name, 100));
-            if (app8bit.toLower() == res.toLower()) {
-                XFree(hint.res_name);
-                return true;
-            }
+            res = QByteArray(hint.res_name, strnlen(hint.res_name, 100)).toLower();
             XFree(hint.res_name);
         }
-
         if (hint.res_class)
             XFree(hint.res_class);
     }
 
-    static const bool matchFromPid = Config().isEnabled("matchFromPid", true);
-    if (!matchFromPid)
-        return false;
+    return res;
+}
 
-    QList<long> pids;
-    if (readProperty(dpy, w, pidatom, pids) && !pids.isEmpty()) {
-        if (pidIsApp(pids.front(), app))
-            return true;
+static bool eventFilter(void* message)
+{
+    XEvent* ev = static_cast<XEvent*>(message);
+    if (ev->type == PropertyNotify) {
+        static Atom clientatom = None;
+        if (clientatom == None) {
+            clientatom = XInternAtom(genesisInfo()->dpy, "_NET_CLIENT_LIST", True);
+            if (clientatom == None)
+                return false;
+        }
+
+        if (ev->xproperty.atom == clientatom) {
+            Display* dpy = genesisInfo()->dpy;
+            int screen = genesisInfo()->screen;
+
+            QList<Window> windows;
+            if (!readProperty(dpy, RootWindow(dpy, screen), clientatom, windows))
+                return false;
+
+            genesisInfo()->allwindows.clear();
+            genesisInfo()->windownames.clear();
+
+            foreach(Window w, windows) {
+                genesisInfo()->windownames.insert(windowName(dpy, w), w);
+                genesisInfo()->allwindows.insert(w);
+            }
+        }
     }
 
-    return false;
+    return genesisInfo()->filter ? genesisInfo()->filter(message) : false;
+}
+
+static inline void initWindows(Display* dpy, int screen)
+{
+    XSelectInput(dpy, RootWindow(dpy, screen), PropertyChangeMask);
+    genesisInfo()->filter = QAbstractEventDispatcher::instance()->setEventFilter(eventFilter);
+    genesisInfo()->dpy = dpy;
+    genesisInfo()->screen = screen;
+
+    const Atom clientatom = XInternAtom(dpy, "_NET_CLIENT_LIST", True);
+    if (clientatom == None)
+        return;
+
+    QList<Window> windows;
+    if (!readProperty(dpy, RootWindow(dpy, screen), clientatom, windows))
+        return;
+
+    foreach(Window w, windows) {
+        genesisInfo()->windownames.insert(windowName(dpy, w), w);
+        genesisInfo()->allwindows.insert(w);
+    }
 }
 
 // raises the window 'w'
@@ -148,37 +163,33 @@ static inline void raiseWindow(Display* dpy, int screen, Window w)
 // returns 'true' if the application named 'app' was found and raised
 static inline bool findAndRaiseWindow(Display* dpy, int screen, const QString &app)
 {
-    const Atom clientatom = XInternAtom(dpy, "_NET_CLIENT_LIST", True);
-    const Atom pidatom = XInternAtom(dpy, "_NET_WM_PID", True);
     const Atom leaderatom = XInternAtom(dpy, "WM_CLIENT_LEADER", True);
-    if (clientatom == None || pidatom == None || leaderatom == None)
+    if (leaderatom == None)
         return false;
 
-    QList<Window> windows;
-    bool ok = readProperty(dpy, RootWindow(dpy, screen), clientatom, windows);
-    if (!ok)
-        return false;
-    ok = false;
+    QByteArray app8bit = app.toLocal8Bit().toLower();
+    const int slash = app8bit.lastIndexOf('/');
+    if (slash != -1)
+        app8bit = app8bit.mid(slash + 1);
 
+    const QHash<QByteArray, Window>::const_iterator winit = genesisInfo()->windownames.find(app8bit);
+    if (winit == genesisInfo()->windownames.end())
+        return false;
+
+    Window targetwin = winit.value(), leader = None;
     QHash<Window, QList<Window> > clients;
-    Window leader = None, w = None;
     QList<Window> currentleader;
 
+    QSet<Window> windows = genesisInfo()->allwindows;
     foreach(const Window win, windows) {
         if (readProperty(dpy, win, leaderatom, currentleader) && !currentleader.isEmpty())
             clients[currentleader.front()].append(win);
-        if (!ok && windowIsApp(dpy, win, app, pidatom)) {
-            ok = true;
-            w = win;
+        if (win == targetwin)
             leader = (currentleader.isEmpty() ? None : currentleader.front());
-        }
     }
 
-    if (!ok)
-        return false;
-
     if (leader == None)
-        raiseWindow(dpy, screen, w);
+        raiseWindow(dpy, screen, targetwin);
     else {
         const QList<Window> subs = clients.value(leader);
         foreach(Window win, subs) {
@@ -187,6 +198,20 @@ static inline bool findAndRaiseWindow(Display* dpy, int screen, const QString &a
     }
 
     return true;
+}
+
+static inline QByteArray processName(const QByteArray& name)
+{
+    const QByteArray file = "/proc/" + name + "/exe";
+    const int maxsize = 1024;
+    char data[maxsize + 1];
+
+    ssize_t len = ::readlink(file.constData(), data, maxsize);
+    if (len == -1)
+        return QByteArray();
+    data[len] = '\0';
+
+    return QByteArray(data);
 }
 
 QSet<QByteArray> System::processes()
@@ -256,26 +281,22 @@ void System::hideFromPager(QWidget *w)
 
 bool System::findWindow(const QString &application, WId *winId)
 {
-    Display* dpy = QX11Info::display();
-
-    const Atom clientatom = XInternAtom(dpy, "_NET_CLIENT_LIST", True);
-    const Atom pidatom = XInternAtom(dpy, "_NET_WM_PID", True);
-    if (clientatom == None || pidatom == None)
-        return false;
-
-    QList<Window> windows;
-    bool ok = readProperty(dpy, RootWindow(dpy, mScreen), clientatom, windows);
-    if (!ok)
-        return false;
-    ok = false;
-
-    foreach(const Window win, windows) {
-        if (windowIsApp(dpy, win, application, pidatom)) {
-            *winId = win;
-            return true;
-        }
+    static bool first = true;
+    if (first) {
+        first = false;
+        initWindows(QX11Info::display(), mScreen);
     }
 
+    QByteArray app8bit = application.toLocal8Bit().toLower();
+    const int slash = app8bit.lastIndexOf('/');
+    if (slash != -1)
+        app8bit = app8bit.mid(slash + 1);
+
+    const QHash<QByteArray, Window>::const_iterator it = genesisInfo()->windownames.find(app8bit);
+    if (it != genesisInfo()->windownames.end()) {
+        *winId = it.value();
+        return true;
+    }
     return false;
 }
 
