@@ -117,13 +117,13 @@ static bool eventFilter(void* message)
 
 static inline void initWindows(Display* dpy, int screen)
 {
-    genesisInfo()->filter = QAbstractEventDispatcher::instance()->setEventFilter(eventFilter);
-    genesisInfo()->dpy = dpy;
-    genesisInfo()->screen = screen;
-
     const Atom clientatom = XInternAtom(dpy, "_NET_CLIENT_LIST", True);
     if (clientatom == None)
         return;
+
+    genesisInfo()->filter = QAbstractEventDispatcher::instance()->setEventFilter(eventFilter);
+    genesisInfo()->dpy = dpy;
+    genesisInfo()->screen = screen;
 
     QList<Window> windows;
     if (!readProperty(dpy, RootWindow(dpy, screen), clientatom, windows))
