@@ -289,8 +289,8 @@ static inline int parseIcon(const QList<unsigned long>& icons, int pos, QIcon* i
     if (pos + 1 >= icons.size())
         return -1;
 
-    unsigned long w = icons.at(pos++);
-    unsigned long h = icons.at(pos++);
+    const unsigned long w = icons.at(pos++);
+    const unsigned long h = icons.at(pos++);
 
     if (w > ICON_MAX_SIZE || h > ICON_MAX_SIZE)
         return -1;
@@ -314,7 +314,7 @@ static inline int parseIcon(const QList<unsigned long>& icons, int pos, QIcon* i
 
 QIcon System::readIcon(Display *dpy, WId winId)
 {
-    Atom iconatom = XInternAtom(dpy, "_NET_WM_ICON", True);
+    const Atom iconatom = XInternAtom(dpy, "_NET_WM_ICON", True);
     if (iconatom == None)
         return QIcon();
 
