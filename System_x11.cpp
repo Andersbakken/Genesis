@@ -18,7 +18,7 @@ struct GenesisSystemInfo
     QSet<Window> allwindows;
     QAbstractEventDispatcher::EventFilter filter;
     Display* dpy;
-    int screen;
+    Window root;
 };
 Q_GLOBAL_STATIC(GenesisSystemInfo, genesisInfo)
 
@@ -85,7 +85,7 @@ static inline QByteArray windowName(Display* dpy, Window w)
 static bool eventFilter(void* message)
 {
     XEvent* ev = static_cast<XEvent*>(message);
-    if (ev->type == PropertyNotify) {
+    if (ev->type == PropertyNotify && ev->xproperty.window == genesisInfo()->root) {
         static Atom clientatom = None;
         if (clientatom == None) {
             clientatom = XInternAtom(genesisInfo()->dpy, "_NET_CLIENT_LIST", True);
@@ -95,10 +95,9 @@ static bool eventFilter(void* message)
 
         if (ev->xproperty.atom == clientatom) {
             Display* dpy = genesisInfo()->dpy;
-            int screen = genesisInfo()->screen;
 
             QList<Window> windows;
-            if (!readProperty(dpy, RootWindow(dpy, screen), clientatom, windows))
+            if (!readProperty(dpy, genesisInfo()->root, clientatom, windows))
                 return false;
 
             genesisInfo()->allwindows.clear();
@@ -122,7 +121,7 @@ static inline void initWindows(Display* dpy, int screen)
 
     genesisInfo()->filter = QAbstractEventDispatcher::instance()->setEventFilter(eventFilter);
     genesisInfo()->dpy = dpy;
-    genesisInfo()->screen = screen;
+    genesisInfo()->root = RootWindow(dpy, screen);
 
     QList<Window> windows;
     if (!readProperty(dpy, RootWindow(dpy, screen), clientatom, windows))
