@@ -14,6 +14,7 @@
 
 struct GenesisSystemInfo
 {
+    QVariantMap programnamemap;
     QHash<QByteArray, Window> windownames;
     QSet<Window> allwindows;
     QAbstractEventDispatcher::EventFilter filter;
@@ -82,6 +83,20 @@ static inline QByteArray windowName(Display* dpy, Window w)
     return res;
 }
 
+static void inline updateWindows(Display* dpy, const QList<Window>& windows)
+{
+    genesisInfo()->allwindows.clear();
+    genesisInfo()->windownames.clear();
+
+    QByteArray name;
+    foreach(Window w, windows) {
+        name = windowName(dpy, w);
+        name = genesisInfo()->programnamemap.value(name, name).toByteArray();
+        genesisInfo()->windownames.insert(name, w);
+        genesisInfo()->allwindows.insert(w);
+    }
+}
+
 static bool eventFilter(void* message)
 {
     XEvent* ev = static_cast<XEvent*>(message);
@@ -100,13 +115,7 @@ static bool eventFilter(void* message)
             if (!readProperty(dpy, genesisInfo()->root, clientatom, windows))
                 return false;
 
-            genesisInfo()->allwindows.clear();
-            genesisInfo()->windownames.clear();
-
-            foreach(Window w, windows) {
-                genesisInfo()->windownames.insert(windowName(dpy, w), w);
-                genesisInfo()->allwindows.insert(w);
-            }
+            updateWindows(dpy, windows);
         }
     }
 
@@ -123,14 +132,18 @@ static inline void initWindows(Display* dpy, int screen)
     genesisInfo()->dpy = dpy;
     genesisInfo()->root = RootWindow(dpy, screen);
 
+    QVariantMap namemap = Config().value<QVariantMap>("appnamemap");
+    if (namemap.isEmpty()) {
+        namemap["vclsalframe"] = "libreoffice";
+        Config().setValue("appnamemap", namemap);
+    }
+    genesisInfo()->programnamemap = namemap;
+
     QList<Window> windows;
     if (!readProperty(dpy, RootWindow(dpy, screen), clientatom, windows))
         return;
 
-    foreach(Window w, windows) {
-        genesisInfo()->windownames.insert(windowName(dpy, w), w);
-        genesisInfo()->allwindows.insert(w);
-    }
+    updateWindows(dpy, windows);
 }
 
 // raises the window 'w'
