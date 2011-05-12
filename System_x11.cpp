@@ -288,14 +288,14 @@ static inline int parseIcon(const QList<unsigned int>& icons, int pos, QIcon* ic
 {
     if (pos + 1 >= icons.size())
         return -1;
-    int w = icons.at(pos++);
-    int h = icons.at(pos++);
+    unsigned int w = icons.at(pos++);
+    unsigned h = icons.at(pos++);
 
     if (w > ICON_MAX_SIZE || h > ICON_MAX_SIZE)
         return -1;
 
     QImage img(w, h, QImage::Format_ARGB32);
-    int y, x, pixel;
+    unsigned int y, x, pixel;
     for (y = 0; y < h; ++y) {
         for (x = 0; x < w; ++x) {
             pixel = icons.at(pos++);
@@ -315,7 +315,7 @@ QIcon System::readIcon(Display *dpy, WId winId)
     if (iconatom == None)
         return QIcon();
 
-    // Should probably not read icons as a list of ints
+    // ### Should probably not read icons as a list of ints
     QList<unsigned int> icons;
     readProperty(dpy, winId, iconatom, icons);
 
