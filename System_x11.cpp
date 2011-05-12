@@ -117,7 +117,6 @@ static bool eventFilter(void* message)
 
 static inline void initWindows(Display* dpy, int screen)
 {
-    XSelectInput(dpy, RootWindow(dpy, screen), PropertyChangeMask);
     genesisInfo()->filter = QAbstractEventDispatcher::instance()->setEventFilter(eventFilter);
     genesisInfo()->dpy = dpy;
     genesisInfo()->screen = screen;
