@@ -276,8 +276,7 @@ bool System::findWindow(const QString &application, WId *winId)
 
     const Atom clientatom = XInternAtom(dpy, "_NET_CLIENT_LIST", True);
     const Atom pidatom = XInternAtom(dpy, "_NET_WM_PID", True);
-    const Atom leaderatom = XInternAtom(dpy, "WM_CLIENT_LEADER", True);
-    if (clientatom == None || pidatom == None || leaderatom == None)
+    if (clientatom == None || pidatom == None)
         return false;
 
     QList<Window> windows;
