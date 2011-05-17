@@ -34,14 +34,6 @@ void ModelThread::run()
     Q_ASSERT(mModel);
     const QList<QByteArray> &roots = mModel->mRoots;
     Q_ASSERT(!roots.isEmpty());
-    enum { DefaultRecurseDepth =
-#ifdef Q_OS_MAC
-           5
-#else
-           1
-#endif
-    };
-
     mLocalItems.clear();
 
     for (int i=0; i<roots.size(); ++i) {
@@ -65,26 +57,27 @@ void ModelThread::scan(const QByteArray &path)
 #else
     const bool doRecurse = path.startsWith("/Applications");
 #endif
-    mWatchPaths.insert(QString::fromLocal8Bit(path));
 
     char fileBuffer[1024];
     memcpy(fileBuffer, path.constData(), path.size());
     fileBuffer[path.size()] = '/';
     char *file = fileBuffer + path.size() + 1;
+    bool addedPath = false;
 
     while (readdir_r(dir, &d, &dret) == 0 && dret) {
         Q_ASSERT(int(strlen(d.d_name)) < 1024 - path.size());
 #ifdef Q_OS_MAC
-        if (d.d_type == DT_DIR || d.d_type == DT_LNK) {
-            if (d.d_namlen > 4 && !strcmp(d.d_name + d.d_namlen - 4, ".app")) {
-                strcpy(file, d.d_name);
-                const Model::Item item = { QString::fromUtf8(fileBuffer), findIconPath(fileBuffer),
-                                           name(QString::fromUtf8(fileBuffer)), QStringList() };
-                mLocalItems.append(item);
-                continue;
+        if (d.d_type == DT_DIR || d.d_type == DT_LNK
+            && d.d_namlen > 4 && !strcmp(d.d_name + d.d_namlen - 4, ".app")) {
+            strcpy(file, d.d_name);
+            const Model::Item item = { QString::fromUtf8(fileBuffer), findIconPath(fileBuffer),
+                                       name(QString::fromUtf8(fileBuffer)), QStringList() };
+            mLocalItems.append(item);
+            if (!addedPath) {
+                addedPath = true;
+                mWatchPaths.insert(QString::fromLocal8Bit(path));
             }
-        }
-        if (d.d_type == DT_DIR && doRecurse && (d.d_namlen > 2 || (strcmp(".", d.d_name) && strcmp("..", d.d_name)))) {
+        } else if (doRecurse && d.d_type == DT_DIR && (d.d_namlen > 2 || (strcmp(".", d.d_name) && strcmp("..", d.d_name)))) {
             scan(path + '/' + reinterpret_cast<const char *>(d.d_name));
         }
 #else
