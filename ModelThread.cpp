@@ -56,13 +56,13 @@ void ModelThread::scan(const QByteArray &path)
     struct stat s;
 #else
     const bool doRecurse = path.startsWith("/Applications");
+    bool addedPath = false;
 #endif
 
     char fileBuffer[1024];
     memcpy(fileBuffer, path.constData(), path.size());
     fileBuffer[path.size()] = '/';
     char *file = fileBuffer + path.size() + 1;
-    bool addedPath = false;
 
     while (readdir_r(dir, &d, &dret) == 0 && dret) {
         Q_ASSERT(int(strlen(d.d_name)) < 1024 - path.size());
