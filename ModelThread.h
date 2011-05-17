@@ -13,11 +13,11 @@ public:
 
 signals:
     void itemsReady(const QList<Model::Item> &newItems);
+    void pathsSearched(const QStringList& paths);
 
 private:
     Model *mModel;
     QSet<QString> mWatchPaths;
-    QFileSystemWatcher *mWatcher;
 
     QList<Model::Item> mLocalItems;
 };

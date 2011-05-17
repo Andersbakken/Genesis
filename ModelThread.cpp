@@ -11,7 +11,6 @@ ModelThread::ModelThread(Model *model)
 {
     connect(this, SIGNAL(finished()), this, SLOT(deleteLater()));
     connect(this, SIGNAL(finished()), model, SIGNAL(initialized()));
-    mWatcher = new QFileSystemWatcher(mModel);
 }
 
 static inline QString findIconPath(const QString &)
@@ -48,11 +47,7 @@ void ModelThread::run()
     for (int i=0; i<roots.size(); ++i) {
         recurse(roots.at(i), Config().value<int>("recurseDepth", DefaultRecurseDepth));
     }
-    connect(mWatcher, SIGNAL(directoryChanged(QString)), mModel, SLOT(reload()));
-    delete mModel->mFileSystemWatcher;
-    mWatcher->addPaths(mWatchPaths.toList());
-    mModel->mFileSystemWatcher = mWatcher;
-
+    emit pathsSearched(mWatchPaths.toList());
     emit itemsReady(mLocalItems);
 }
 

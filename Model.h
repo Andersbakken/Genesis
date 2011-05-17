@@ -62,6 +62,7 @@ signals:
     void progress(int current);
 private slots:
     void updateItems(const QList<Model::Item> &newItems);
+    void searchPathsChanged(const QStringList& paths);
 private:
     void restoreUserEntries(Config* config);
     void saveUserEntries(Config* config);

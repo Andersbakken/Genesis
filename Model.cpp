@@ -243,8 +243,17 @@ const QList<QByteArray> & Model::roots() const
 void Model::reload()
 {
     ModelThread *thread = new ModelThread(this);
+    connect(thread, SIGNAL(pathsSearched(QStringList)), this, SLOT(searchPathsChanged(QStringList)));
     connect(thread, SIGNAL(itemsReady(QList<Model::Item>)), this, SLOT(updateItems(QList<Model::Item>)), Qt::QueuedConnection);
     thread->start();
+}
+
+void Model::searchPathsChanged(const QStringList &paths)
+{
+    delete mFileSystemWatcher;
+    mFileSystemWatcher = new QFileSystemWatcher(this);
+    connect(mFileSystemWatcher, SIGNAL(directoryChanged(QString)), this, SLOT(reload()));
+    mFileSystemWatcher->addPaths(paths);
 }
 
 void Model::updateItems(const QList<Item> &newItems)
