@@ -67,7 +67,7 @@ void ModelThread::scan(const QByteArray &path)
     while (readdir_r(dir, &d, &dret) == 0 && dret) {
         Q_ASSERT(int(strlen(d.d_name)) < 1024 - path.size());
 #ifdef Q_OS_MAC
-        if (d.d_type == DT_DIR || d.d_type == DT_LNK
+        if ((d.d_type == DT_DIR || d.d_type == DT_LNK)
             && d.d_namlen > 4 && !strcmp(d.d_name + d.d_namlen - 4, ".app")) {
             strcpy(file, d.d_name);
             const Model::Item item = { QString::fromUtf8(fileBuffer), findIconPath(fileBuffer),
