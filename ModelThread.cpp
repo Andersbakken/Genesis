@@ -65,7 +65,7 @@ void ModelThread::scan(const QByteArray &path)
 #else
     const bool doRecurse = path.startsWith("/Applications");
 #endif
-    mWatchPaths.insert(path);
+    mWatchPaths.insert(QString::fromLocal8Bit(path));
 
     char fileBuffer[1024];
     memcpy(fileBuffer, path.constData(), path.size());
@@ -81,6 +81,7 @@ void ModelThread::scan(const QByteArray &path)
                 const Model::Item item = { QString::fromUtf8(fileBuffer), findIconPath(fileBuffer),
                                            name(QString::fromUtf8(fileBuffer)), QStringList() };
                 mLocalItems.append(item);
+                continue;
             }
         }
         if (d.d_type == DT_DIR && doRecurse && (d.d_namlen > 2 || (strcmp(".", d.d_name) && strcmp("..", d.d_name)))) {
