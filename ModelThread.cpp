@@ -45,24 +45,28 @@ void ModelThread::run()
     mLocalItems.clear();
 
     for (int i=0; i<roots.size(); ++i) {
-        recurse(roots.at(i), Config().value<int>("recurseDepth", DefaultRecurseDepth));
+        scan(roots.at(i));
     }
     emit pathsSearched(mWatchPaths.toList());
     emit itemsReady(mLocalItems);
 }
 
-void ModelThread::recurse(const QByteArray &path, int maxDepth)
+void ModelThread::scan(const QByteArray &path)
 {
     DIR *dir = opendir(path.constData());
     if (!dir) {
         qWarning("Can't read directory [%s]", path.constData());
         return;
     }
+
     struct dirent d, *dret;
 #ifndef Q_OS_MAC
     struct stat s;
-    mWatchPaths.insert(path);
+#else
+    const bool doRecurse = path.startsWith("/Applications");
 #endif
+    mWatchPaths.insert(path);
+
     char fileBuffer[1024];
     memcpy(fileBuffer, path.constData(), path.size());
     fileBuffer[path.size()] = '/';
@@ -73,17 +77,14 @@ void ModelThread::recurse(const QByteArray &path, int maxDepth)
 #ifdef Q_OS_MAC
         if (d.d_type == DT_DIR || d.d_type == DT_LNK) {
             if (d.d_namlen > 4 && !strcmp(d.d_name + d.d_namlen - 4, ".app")) {
-                mWatchPaths.insert(path);
                 strcpy(file, d.d_name);
                 const Model::Item item = { QString::fromUtf8(fileBuffer), findIconPath(fileBuffer),
                                            name(QString::fromUtf8(fileBuffer)), QStringList() };
                 mLocalItems.append(item);
             }
         }
-        if (d.d_type == DT_DIR) {
-            if (maxDepth > 1 && (d.d_namlen > 2 || (strcmp(".", d.d_name) && strcmp("..", d.d_name)))) {
-                recurse(path + '/' + reinterpret_cast<const char *>(d.d_name), maxDepth - 1);
-            }
+        if (d.d_type == DT_DIR && doRecurse && (d.d_namlen > 2 || (strcmp(".", d.d_name) && strcmp("..", d.d_name)))) {
+            scan(path + '/' + reinterpret_cast<const char *>(d.d_name));
         }
 #else
         if (d.d_type == DT_REG || d.d_type == DT_LNK) {
@@ -96,9 +97,6 @@ void ModelThread::recurse(const QByteArray &path, int maxDepth)
             } else {
                 qWarning("Can't stat [%s]", fileBuffer);
             }
-        } else if (maxDepth > 1 && strcmp(".", d.d_name) && strcmp("..", d.d_name)) {
-            strcpy(file, d.d_name);
-            recurse(fileBuffer, maxDepth - 1);
         }
 #endif
     }

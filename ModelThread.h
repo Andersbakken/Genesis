@@ -9,7 +9,7 @@ class ModelThread : public QThread
 public:
     ModelThread(Model *model);
     virtual void run();
-    void recurse(const QByteArray &path, int maxDepth);
+    void scan(const QByteArray &path);
 
 signals:
     void itemsReady(const QList<Model::Item> &newItems);
