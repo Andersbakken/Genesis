@@ -58,6 +58,7 @@ public:
 public slots:
     void reload();
 signals:
+    void indexRebuilt();
     void initialized();
     void progress(int current);
 private slots:

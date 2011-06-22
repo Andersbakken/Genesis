@@ -23,14 +23,13 @@ private slots:
 #ifdef ENABLE_SERVER
     void onCommandReceived(const QString &command);
 #endif
-    void startSearch(const QString& input);
+    void search();
     void invoke(const QModelIndex &index);
     void shortcutActivated(int shortcut);
     void keepAlive();
 
     void enable();
     void disable();
-    void onUnhandledUp();
 private:
     void showResultList();
     void hideResultList();

@@ -136,6 +136,7 @@ Chooser::Chooser(QWidget *parent)
 
     new QShortcut(QKeySequence(QKeySequence::Close), this, SLOT(disable()));
     connect(mResultList, SIGNAL(clicked(QModelIndex)), this, SLOT(invoke(QModelIndex)));
+    connect(mSearchModel, SIGNAL(indexRebuilt()), this, SLOT(search()));
     layout->setMargin(10);
     layout->setSpacing(10);
     layout->addWidget(mSearchInput, 0, Qt::AlignTop);
@@ -143,7 +144,7 @@ Chooser::Chooser(QWidget *parent)
 
     mResultList->hide();
 
-    connect(mSearchInput, SIGNAL(textChanged(QString)), this, SLOT(startSearch(QString)));
+    connect(mSearchInput, SIGNAL(textChanged(QString)), this, SLOT(search()));
 
     Config config;
     mWidth = config.value<int>("width", 500);
@@ -165,7 +166,6 @@ Chooser::Chooser(QWidget *parent)
     connect(&mKeepAlive, SIGNAL(timeout()), this, SLOT(keepAlive()));
     mKeepAlive.setInterval(1000 * 60 * 5); // five minutes
     mKeepAlive.start();
-    connect(mResultList, SIGNAL(unhandledUp()), this, SLOT(onUnhandledUp()));
 
     System::hideFromPager(this);
 }
@@ -185,9 +185,9 @@ void Chooser::shortcutActivated(int shortcut)
     }
 }
 
-void Chooser::startSearch(const QString& input)
+void Chooser::search()
 {
-    QList<Match> matches = mSearchModel->matches(input);
+    QList<Match> matches = mSearchModel->matches(mSearchInput->text());
     mResultList->setMatches(matches);
 
     if (matches.isEmpty())
@@ -216,8 +216,11 @@ void Chooser::showEvent(QShowEvent *e)
         if (initial) {
             hide();
             initial = false;
+            return;
         }
     }
+    mSearchInput->setText(Config().value<QStringList>("history").value(0));
+    mSearchInput->selectAll();
 }
 
 void Chooser::enable()
@@ -375,9 +378,3 @@ void Chooser::keepAlive()
     }
 }
 
-void Chooser::onUnhandledUp()
-{
-    const QStringList history = Config().value<QStringList>("history");
-    if (!history.empty())
-        mSearchInput->setText(history.first());
-}

@@ -307,6 +307,7 @@ void Model::rebuildIndex()
             }
         }
     }
+    emit indexRebuilt();
 }
 
 QHash<QString, int> Model::findUserEntries(const QString &input) const
