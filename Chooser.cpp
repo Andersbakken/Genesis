@@ -219,8 +219,6 @@ void Chooser::showEvent(QShowEvent *e)
             return;
         }
     }
-    mSearchInput->setText(Config().value<QStringList>("history").value(0));
-    mSearchInput->selectAll();
 }
 
 void Chooser::enable()
@@ -238,6 +236,8 @@ void Chooser::enable()
 
     const int animateHeight = mResultList->isHidden() ? (mResultShownHeight - mResultHiddenHeight) / 2 : 0;
     ::animate(this, true, animateHeight);
+    mSearchInput->setText(Config().value<QString>("last"));
+    mSearchInput->selectAll();
 }
 
 // Should stick this kind of thing into some global config object
@@ -280,10 +280,7 @@ void Chooser::keyPressEvent(QKeyEvent *e)
 void Chooser::invoke(const QModelIndex &index)
 {
     const Match::Type type = static_cast<Match::Type>(index.data(ResultModel::TypeRole).toInt());
-    Config config;
-    QStringList history = config.value<QStringList>("history");
-    history.prepend(mSearchInput->text());
-    config.setValue("history", history);
+    Config().setValue("last", mSearchInput->text());
     switch (type) {
     case Match::Application: {
         const QString path = index.data(ResultModel::FilePathRole).toString();
