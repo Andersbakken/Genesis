@@ -198,7 +198,9 @@ void Chooser::search()
 
 void Chooser::showEvent(QShowEvent *e)
 {
-    setStyleSheet("border: none"); // ### This should really not be needed
+    static QColor foreground = Config().value<QColor>("foregroundColor", QColor(Qt::black));
+    setStyleSheet(QString("border: none; color: rgb(%1, %2, %3)")
+                  .arg(foreground.red()).arg(foreground.green()).arg(foreground.blue()));
 
     QRect r(QPoint(), size());
     r.moveCenter(qApp->desktop()->screenGeometry(this).center());
