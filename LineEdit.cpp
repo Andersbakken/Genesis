@@ -3,6 +3,7 @@
 LineEdit::LineEdit(QWidget *parent)
     : QLineEdit(parent)
 {
+    new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_L), this, SLOT(selectAll()), 0, Qt::WindowShortcut);
     setAttribute(Qt::WA_MacShowFocusRect, false);
 
     QColor base = qApp->palette().color(QPalette::Base);
