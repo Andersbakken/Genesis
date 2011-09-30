@@ -55,7 +55,7 @@ void ModelThread::scan(const QByteArray &path)
 #ifndef Q_OS_MAC
     struct stat s;
 #else
-    const bool doRecurse = path.startsWith("/Applications");
+    const bool doRecurse = path.contains("/Applications");
     bool addedPath = false;
 #endif
 
