@@ -3,7 +3,7 @@
 
 #include <QtGui>
 
-class Match;
+struct Match;
 class ResultModel;
 
 class ResultList : public QListView

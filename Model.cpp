@@ -220,13 +220,13 @@ QList<Match> Model::matches(const QString &text) const
 
             // ### clever default icon?
             QVariant icon = handler.value("icon");
-            QIcon i;
+            QIcon icn;
             if (icon.type() == QVariant::Icon) {
-                i = qVariantValue<QIcon>(icon);
+                icn = qVariantValue<QIcon>(icon);
             } else {
-                i = QIcon(icon.toString());
+                icn = QIcon(icon.toString());
             }
-            matches.append(Match(Match::Url, name, url, i));
+            matches.append(Match(Match::Url, name, url, icn));
         }
         if (text.startsWith("http://")) {
             matches.append(Match(Match::Url, "Open " + text, text, QIcon()));
