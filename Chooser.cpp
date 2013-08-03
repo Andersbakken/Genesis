@@ -102,7 +102,7 @@ static inline QByteArray defaultSearchPaths()
 #ifdef Q_OS_MAC
     if (!paths.isEmpty())
         paths += ":";
-    paths += "/Applications:/Developer/Applications";
+    paths += "/Applications:/Developer/Applications:/System/Library/CoreServices";
 #endif
     return paths;
 }
