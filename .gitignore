@@ -2,3 +2,6 @@
 .moc
 Makefile
 Genesis
+qrc_Genesis.cpp
+/Genesis.pbproj/*
+/Genesis.app/*
