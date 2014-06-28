@@ -4,7 +4,7 @@
 #include "Model.h"
 #include <QAbstractListModel>
 
-class Match;
+struct Match;
 
 Q_DECLARE_METATYPE(QList<QKeySequence>);
 class ResultModel : public QAbstractListModel
