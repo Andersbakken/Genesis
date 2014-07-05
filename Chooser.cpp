@@ -28,23 +28,33 @@ static void animate(QWidget *target, bool enter, int heightdiff = 0)
         r.moveBottom(r.bottom() - heightdiff);
     }
 
-    if (!enablePositionAnimation)
-        target->move(r.topLeft());
     if (!enableOpacityAnimation)
         target->setWindowOpacity(enter ? 1.0 : 0.0);
-    if (!enablePositionAnimation && !enableOpacityAnimation)
+    if (!enablePositionAnimation && !enableOpacityAnimation) {
+        target->move(r.topLeft());
         return;
-    QParallelAnimationGroup *group = new QParallelAnimationGroup;
-    if (enableOpacityAnimation) {
-        QPropertyAnimation *opacityAnimation = new QPropertyAnimation(target, "windowOpacity", group);
-        opacityAnimation->setDuration(400);
-        opacityAnimation->setEndValue(enter ? 1.0 : 0.0);
     }
-    if (enablePositionAnimation) {
-        QPropertyAnimation *positionAnimation = new QPropertyAnimation(target, "pos", group);
-        positionAnimation->setDuration(200);
-        positionAnimation->setEasingCurve(QEasingCurve::InQuad);
-        positionAnimation->setEndValue(r.topLeft());
+    QPropertyAnimation *positionAnimation = new QPropertyAnimation(target, "pos");
+    positionAnimation->setDuration(enablePositionAnimation ? 200 : 0);
+    positionAnimation->setEasingCurve(QEasingCurve::InQuad);
+    positionAnimation->setEndValue(r.topLeft());
+
+    QPropertyAnimation *opacityAnimation = new QPropertyAnimation(target, "windowOpacity");
+    opacityAnimation->setDuration(enableOpacityAnimation ? 400 : 0);
+    opacityAnimation->setEndValue(enter ? 1.0 : 0.0);
+
+    QAnimationGroup *group = 0;
+    if (enablePositionAnimation && enableOpacityAnimation) {
+        group = new QParallelAnimationGroup;
+    } else {
+        group = new QSequentialAnimationGroup;
+    }
+    if (enter) {
+        group->addAnimation(positionAnimation);
+        group->addAnimation(opacityAnimation);
+    } else {
+        group->addAnimation(opacityAnimation);
+        group->addAnimation(positionAnimation);
     }
 
     group->start(QAbstractAnimation::DeleteWhenStopped);
