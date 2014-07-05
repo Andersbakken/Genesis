@@ -223,6 +223,12 @@ void Chooser::showEvent(QShowEvent *e)
     }
 }
 
+void Chooser::hideEvent(QHideEvent *e)
+{
+    QWidget::hideEvent(e);
+    mSearchModel->reload();
+}
+
 void Chooser::enable()
 {
     static const bool showHide = Config().isEnabled("showHide", false);

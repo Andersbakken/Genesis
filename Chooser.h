@@ -17,6 +17,8 @@ public:
     Chooser(QWidget* parent = 0);
     void showEvent(QShowEvent *e);
     void keyPressEvent(QKeyEvent *e);
+    void hideEvent(QHideEvent *e);
+
     bool event(QEvent *e);
 
 private slots:
