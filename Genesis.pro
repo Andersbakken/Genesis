@@ -50,6 +50,7 @@ mac {
     SOURCES += PreviousWindow_mac.cpp System_mac.cpp
 } else:unix {
     SOURCES += PreviousWindow_x11.cpp System_x11.cpp
+    LIBS += -lX11
 } else {
     SOURCES += PreviousWindow_empty.cpp
 }
